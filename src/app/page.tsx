@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
+import { ResultsView } from "@/components/results-view";
 import { AREAS } from "@/lib/areas";
 import { CATEGORIES, getCategory } from "@/lib/categories";
 import { listPublishedPractitioners, type Practitioner } from "@/lib/db/practitioners";
@@ -13,12 +14,12 @@ import {
   type Filters,
 } from "@/lib/search";
 
-// Startsida: sök, kategorirutnät och resultatlista. Enkel layout – design
+// Startsida: sök, kategorirutnät, resultatlista och karta. Enkel layout – design
 // kommer i nästa omgång.
 
 export default function Home(props: PageProps<"/">) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-10">
+    <main className="mx-auto w-full max-w-6xl px-4 py-10">
       <div className="text-center">
         <h1 className="text-3xl font-bold">Hitta lokala utövare i Karlskrona</h1>
         <p className="mt-2 text-neutral-600">
@@ -57,11 +58,21 @@ async function SearchAndResults({ searchParams }: { searchParams: PageProps<"/">
             </Link>
           )}
         </div>
-        {results.length === 0 ? (
-          <EmptyState filters={filters} all={all} />
-        ) : (
-          <ResultList practitioners={results} />
-        )}
+        <ResultsView
+          list={results.length === 0 ? <EmptyState filters={filters} all={all} /> : <ResultList practitioners={results} />}
+          points={results.map((p) => {
+            const category = getCategory(p.category);
+            return {
+              slug: p.slug,
+              name: p.name,
+              area: p.area,
+              categoryName: category?.name ?? "",
+              color: category?.color ?? "#6d6d6d",
+              lat: p.lat,
+              lng: p.lng,
+            };
+          })}
+        />
       </section>
     </>
   );
