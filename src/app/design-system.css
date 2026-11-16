@@ -213,9 +213,12 @@
   width: 100%;
   max-width: 1200px;
   margin-inline: auto;
-  padding-inline: 1.25rem;
+  /* max(...) håller innehållet fritt från notchen när telefonen ligger ner */
+  padding-left: max(1.25rem, env(safe-area-inset-left));
+  padding-right: max(1.25rem, env(safe-area-inset-right));
   @media (min-width: 640px) {
-    padding-inline: 2rem;
+    padding-left: max(2rem, env(safe-area-inset-left));
+    padding-right: max(2rem, env(safe-area-inset-right));
   }
 }
 

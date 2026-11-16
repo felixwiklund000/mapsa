@@ -1,7 +1,7 @@
 // Databasfrågor för utövare. Appen hämtar data härifrån och skriver aldrig
 // SQL direkt i sidor eller komponenter.
 
-import { getDb } from "./client.ts";
+import { getSql } from "./client.ts";
 import type { CategorySlug } from "../categories.ts";
 
 export type Level = "grundlistning" | "bas" | "mellan" | "vip";
@@ -62,9 +62,9 @@ type PractitionerRow = {
   video_url: string | null;
   level: Level;
   status: Status;
-  registered_at: string;
+  registered_at: Date;
   booking_clicks: number;
-  is_test_data: number;
+  is_test_data: boolean;
 };
 
 type ServiceRow = {
@@ -95,31 +95,25 @@ function groupBy<T extends { practitioner_id: number }, U>(
 }
 
 /** Hämtar tjänster och bilder för en uppsättning utövarrader och sätter ihop allt. */
-function withRelations(rows: PractitionerRow[]): Practitioner[] {
+async function withRelations(rows: PractitionerRow[]): Promise<Practitioner[]> {
   if (rows.length === 0) return [];
-  const db = getDb();
+  const sql = getSql();
   const ids = rows.map((r) => r.id);
-  const placeholders = ids.map(() => "?").join(",");
+
+  const [serviceRows, imageRows] = await Promise.all([
+    sql<ServiceRow[]>`
+      SELECT id, practitioner_id, name, price_sek, duration_min FROM services
+      WHERE practitioner_id IN ${sql(ids)} ORDER BY sort_order, id`,
+    sql<ImageRow[]>`
+      SELECT id, practitioner_id, path FROM images
+      WHERE practitioner_id IN ${sql(ids)} ORDER BY sort_order, id`,
+  ]);
 
   const services = groupBy(
-    db
-      .prepare(
-        `SELECT id, practitioner_id, name, price_sek, duration_min FROM services
-         WHERE practitioner_id IN (${placeholders}) ORDER BY sort_order, id`,
-      )
-      .all(...ids) as unknown as ServiceRow[],
+    serviceRows,
     (s): Service => ({ id: s.id, name: s.name, priceSek: s.price_sek, durationMin: s.duration_min }),
   );
-
-  const images = groupBy(
-    db
-      .prepare(
-        `SELECT id, practitioner_id, path FROM images
-         WHERE practitioner_id IN (${placeholders}) ORDER BY sort_order, id`,
-      )
-      .all(...ids) as unknown as ImageRow[],
-    (i): PractitionerImage => ({ id: i.id, path: i.path }),
-  );
+  const images = groupBy(imageRows, (i): PractitionerImage => ({ id: i.id, path: i.path }));
 
   return rows.map((row) => ({
     id: row.id,
@@ -139,41 +133,37 @@ function withRelations(rows: PractitionerRow[]): Practitioner[] {
     videoUrl: row.video_url,
     level: row.level,
     status: row.status,
-    registeredAt: row.registered_at,
+    registeredAt: row.registered_at.toISOString(),
     bookingClicks: row.booking_clicks,
-    isTestData: row.is_test_data === 1,
+    isTestData: row.is_test_data,
     services: services.get(row.id) ?? [],
     images: images.get(row.id) ?? [],
   }));
 }
 
 /** Alla publicerade utövare. Mellan och VIP först (topplacering), sedan i namnordning. */
-export function listPublishedPractitioners(): Practitioner[] {
-  const rows = getDb()
-    .prepare(
-      `SELECT * FROM practitioners
-       WHERE status = 'publicerad'
-       ORDER BY CASE WHEN level IN ('mellan', 'vip') THEN 0 ELSE 1 END, name COLLATE NOCASE`,
-    )
-    .all() as unknown as PractitionerRow[];
+export async function listPublishedPractitioners(): Promise<Practitioner[]> {
+  const sql = getSql();
+  const rows = await sql<PractitionerRow[]>`
+    SELECT * FROM practitioners
+    WHERE status = 'publicerad'
+    ORDER BY CASE WHEN level IN ('mellan', 'vip') THEN 0 ELSE 1 END, lower(name)`;
   return withRelations(rows);
 }
 
 /** En publicerad utövare, eller undefined om den inte finns eller inte är publicerad. */
-export function getPublishedPractitionerBySlug(slug: string): Practitioner | undefined {
-  const row = getDb()
-    .prepare(`SELECT * FROM practitioners WHERE slug = ? AND status = 'publicerad'`)
-    .get(slug) as unknown as PractitionerRow | undefined;
-  return row ? withRelations([row])[0] : undefined;
+export async function getPublishedPractitionerBySlug(slug: string): Promise<Practitioner | undefined> {
+  const sql = getSql();
+  const rows = await sql<PractitionerRow[]>`
+    SELECT * FROM practitioners WHERE slug = ${slug} AND status = 'publicerad'`;
+  return rows.length > 0 ? (await withRelations([rows[0]]))[0] : undefined;
 }
 
 /** Räknar upp klick till bokning. Returnerar true om en publicerad utövare uppdaterades. */
-export function incrementBookingClicks(slug: string): boolean {
-  const result = getDb()
-    .prepare(
-      `UPDATE practitioners SET booking_clicks = booking_clicks + 1
-       WHERE slug = ? AND status = 'publicerad'`,
-    )
-    .run(slug);
-  return result.changes > 0;
+export async function incrementBookingClicks(slug: string): Promise<boolean> {
+  const sql = getSql();
+  const result = await sql`
+    UPDATE practitioners SET booking_clicks = booking_clicks + 1
+    WHERE slug = ${slug} AND status = 'publicerad'`;
+  return result.count > 0;
 }

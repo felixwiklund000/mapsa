@@ -7,7 +7,7 @@ import { incrementBookingClicks } from "@/lib/db/practitioners";
 export async function POST(_request: Request, ctx: RouteContext<"/api/bokningsklick/[slug]">) {
   const { slug } = await ctx.params;
   try {
-    incrementBookingClicks(slug);
+    await incrementBookingClicks(slug);
   } catch (err) {
     console.error("Kunde inte räkna bokningsklick", err);
   }

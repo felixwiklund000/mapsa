@@ -15,7 +15,7 @@ import { BookingButton } from "./booking-button";
 
 export async function generateMetadata(props: PageProps<"/utovare/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
-  const p = getPublishedPractitionerBySlug(slug);
+  const p = await getPublishedPractitionerBySlug(slug);
   if (!p) return { title: "Utövaren hittades inte | Mapsa", robots: { index: false } };
   const category = getCategory(p.category);
   return {
@@ -46,7 +46,7 @@ export default function PractitionerPage(props: PageProps<"/utovare/[slug]">) {
 async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["params"] }) {
   await connection();
   const { slug } = await params;
-  const p = getPublishedPractitionerBySlug(slug);
+  const p = await getPublishedPractitionerBySlug(slug);
   if (!p) notFound();
 
   const category = getCategory(p.category);

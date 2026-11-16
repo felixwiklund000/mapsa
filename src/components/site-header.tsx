@@ -20,7 +20,7 @@ export function Logo() {
 // kartrutnät i bakgrunden.
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-[1000] border-b border-line/70 bg-canvas/80 backdrop-blur-xl backdrop-saturate-150">
+    <header className="sticky top-0 z-[1000] border-b pt-[env(safe-area-inset-top)] border-line/70 bg-canvas/80 backdrop-blur-xl backdrop-saturate-150">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-[0.35]"

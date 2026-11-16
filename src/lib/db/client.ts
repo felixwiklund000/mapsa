@@ -1,24 +1,38 @@
-// Öppnar SQLite-databasen (Nodes inbyggda node:sqlite) och skapar tabellerna
-// om de inte finns. Resten av appen ska bara prata med databasen via
-// filerna i den här mappen.
+// Anslutning till Postgres (Supabase). Adressen läses från miljövariabeln
+// DATABASE_URL. Resten av appen ska bara prata med databasen via filerna i
+// den här mappen.
+//
+// Supabase: använd anslutningssträngen för "Transaction pooler" (port 6543).
+// Den poolern stöder inte förberedda frågor, därför `prepare: false`.
 
-import { DatabaseSync } from "node:sqlite";
-import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { SCHEMA_SQL } from "./schema.ts";
+import postgres from "postgres";
 
-// Databasfilen ligger utanför koden och ska inte paketeras med bygget.
-const DB_PATH = resolve(/*turbopackIgnore: true*/ process.env.DATABASE_PATH ?? "data/mapsa.db");
+type Sql = ReturnType<typeof postgres>;
 
-let db: DatabaseSync | undefined;
+// Sparas på globalThis så att utvecklingsservern inte öppnar nya
+// anslutningar varje gång en fil laddas om.
+const globalForDb = globalThis as unknown as { mapsaSql?: Sql };
 
-export function getDb(): DatabaseSync {
-  if (!db) {
-    mkdirSync(dirname(DB_PATH), { recursive: true });
-    db = new DatabaseSync(DB_PATH);
-    db.exec("PRAGMA foreign_keys = ON;");
-    db.exec("PRAGMA journal_mode = WAL;");
-    db.exec(SCHEMA_SQL);
+export function getSql(): Sql {
+  if (globalForDb.mapsaSql) return globalForDb.mapsaSql;
+
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "DATABASE_URL saknas. Lägg in anslutningssträngen från Supabase i .env.local (lokalt) eller som miljövariabel i Vercel.",
+    );
   }
-  return db;
+
+  const host = new URL(url).hostname;
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+
+  globalForDb.mapsaSql = postgres(url, {
+    prepare: false,
+    ssl: isLocal ? false : "require",
+    max: 5,
+    idle_timeout: 20,
+    connect_timeout: 15,
+    onnotice: () => {}, // t.ex. "tabellen finns redan" – inget att visa
+  });
+  return globalForDb.mapsaSql;
 }

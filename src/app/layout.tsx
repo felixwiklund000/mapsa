@@ -21,9 +21,20 @@ export const metadata: Metadata = {
   title: "Mapsa – hitta lokala utövare i Karlskrona",
   description:
     "Hitta och jämför massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet i Karlskrona. Du bokar direkt hos utövaren.",
+  applicationName: "Mapsa",
+  // iPhone: "Lägg till på hemskärmen" öppnar Mapsa som en egen app.
+  appleWebApp: {
+    capable: true,
+    title: "Mapsa",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
+  // Låter sidan gå ut till skärmkanten på telefoner med notch; marginaler
+  // för notch och hemknapp läggs på i header och bokningsfält.
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f8f6f2" },
     { media: "(prefers-color-scheme: dark)", color: "#121212" },

@@ -52,7 +52,7 @@ async function SearchBarWithFilters({ searchParams }: { searchParams: SearchPara
 async function CategoriesAndResults({ searchParams }: { searchParams: SearchParams }) {
   await connection();
   const filters = parseFilters(await searchParams);
-  const all = listPublishedPractitioners();
+  const all = await listPublishedPractitioners();
   const results = filterPractitioners(all, filters);
   // Antal per kategori räknas med sök och område, men oberoende av vald kategori.
   const forCounts = filterPractitioners(all, filters, { ignoreCategories: true });

@@ -7,12 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed": "node --no-warnings scripts/seed.ts"
+    "db:seed": "node --no-warnings scripts/seed.ts",
+    "db:export-sql": "node --no-warnings scripts/export-seed-sql.ts",
+    "icons": "node --no-warnings scripts/generate-icons.ts"
   },
   "dependencies": {
     "leaflet": "1.9.4",
     "lucide-react": "^1.73.0",
     "next": "16.4.6",
+    "postgres": "^4.1.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -24,6 +27,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
+    "sharp": "^0.35.5",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
   }
