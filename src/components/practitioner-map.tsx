@@ -11,6 +11,7 @@ export type MapPoint = {
   area: string;
   categoryName: string;
   color: string;
+  priceFrom: string | null;
   lat: number;
   lng: number;
 };
@@ -70,15 +71,19 @@ export function PractitionerMap({ points }: { points: MapPoint[] }) {
 
     layer.clearLayers();
     for (const p of points) {
-      L.circleMarker([p.lat, p.lng], {
-        radius: 9,
-        color: "#ffffff",
-        weight: 2,
-        fillColor: p.color,
-        fillOpacity: 1,
+      L.marker([p.lat, p.lng], {
+        title: p.name,
+        alt: p.name,
+        icon: L.divIcon({
+          className: "",
+          // Färgen kommer från vår egen kategorilista, aldrig från användardata.
+          html: `<span class="mapsa-pin" style="--pin:${p.color}"></span>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+          popupAnchor: [0, -14],
+        }),
       })
-        .bindPopup(() => popupContent(p))
-        .bindTooltip(p.name)
+        .bindPopup(() => popupContent(p), { closeButton: false })
         .addTo(layer);
     }
 
@@ -95,7 +100,7 @@ export function PractitionerMap({ points }: { points: MapPoint[] }) {
       ref={containerRef}
       role="region"
       aria-label="Karta över utövare"
-      className="h-full min-h-80 w-full rounded-xl bg-neutral-100"
+      className="h-full min-h-80 w-full"
     />
   );
 }
@@ -104,12 +109,20 @@ export function PractitionerMap({ points }: { points: MapPoint[] }) {
 // som utövare skrivit själva aldrig tolkas som HTML.
 function popupContent(p: MapPoint): HTMLElement {
   const root = document.createElement("div");
+  root.className = "mapsa-popup";
   const link = document.createElement("a");
   link.href = `/utovare/${encodeURIComponent(p.slug)}`;
   link.textContent = p.name;
-  link.style.fontWeight = "600";
+  link.className = "mapsa-popup-title";
   const meta = document.createElement("div");
+  meta.className = "mapsa-popup-meta";
   meta.textContent = `${p.categoryName} · ${p.area}`;
   root.append(link, meta);
+  if (p.priceFrom) {
+    const price = document.createElement("div");
+    price.className = "mapsa-popup-price";
+    price.textContent = `från ${p.priceFrom}`;
+    root.append(price);
+  }
   return root;
 }

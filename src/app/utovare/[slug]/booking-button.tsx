@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowUpRight } from "lucide-react";
+
 // Bokningsknappen är en vanlig länk, så den fungerar även utan JavaScript.
 // Vid klick skickas en "beacon" som räknar klicket i bakgrunden – länken
 // väntar aldrig på den.
@@ -7,13 +9,15 @@
 export function BookingButton({
   slug,
   href,
-  name,
+  label,
   external,
+  className = "",
 }: {
   slug: string;
   href: string;
-  name: string;
+  label: string;
   external: boolean;
+  className?: string;
 }) {
   function countClick() {
     try {
@@ -31,9 +35,10 @@ export function BookingButton({
       href={href}
       onClick={countClick}
       {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow" } : {})}
-      className="inline-flex w-full items-center justify-center rounded-lg bg-[#a85a26] px-5 py-3 font-semibold text-white hover:bg-[#8f4c20] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a85a26] sm:w-auto"
+      className={`inline-flex min-h-13 items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-center leading-snug font-semibold text-on-accent shadow-card transition hover:bg-accent-hover hover:shadow-lift active:scale-[0.98] ${className}`}
     >
-      Boka hos {name}
+      <span>{label}</span>
+      <ArrowUpRight className="size-4.5 shrink-0" strokeWidth={2.5} aria-hidden />
       {external && <span className="sr-only"> (öppnas i ny flik)</span>}
     </a>
   );

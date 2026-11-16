@@ -1,0 +1,331 @@
+/*
+ * MAPSA DESIGNSYSTEM
+ * ==================
+ * Alla färger, typsnitt, radier, skuggor och typografiska stilar definieras
+ * här och används via Tailwind-klasser (bg-canvas, text-ink, shadow-card,
+ * text-display ...). Skriv aldrig hex-färger direkt i komponenter.
+ *
+ * Känsla: lugn, varm, exklusiv men lättillgänglig.
+ * - Varm off-white bakgrund, vita ytor ovanpå.
+ * - EN accent (bränd orange) för handlingar: knappar, länkar, fokus.
+ * - Kategorifärger endast som markör (ikon, nål, prick) eller som mjuk
+ *   pastellton i bildplatshållare – aldrig som stora kraftiga ytor.
+ * - Guld är reserverat för Utvald/VIP och används sparsamt.
+ * - Ljust läge är huvudidentiteten. Mörkt läge följer systeminställningen.
+ */
+
+/* ---------- Råa värden (ljust läge) ---------- */
+:root {
+  /* Ytor */
+  --canvas: #f8f6f2; /* sidans bakgrund, varm off-white */
+  --surface: #ffffff; /* kort, sökfält, paneler */
+  --surface-sunken: #f1eee8; /* fält, segmentknappar, platshållare */
+  --line: #e8e3db; /* tunna avdelare */
+  --line-strong: #d8d1c6;
+
+  /* Text */
+  --ink: #1c1a17; /* rubriker och brödtext */
+  --ink-muted: #6b665e; /* metadata */
+  --ink-subtle: #9a948a; /* platshållartext, ikoner i fält */
+
+  /* Accent – den enda handlingsfärgen */
+  --accent: #a85a26;
+  --accent-hover: #904b1e;
+  --accent-soft: #f6e9df;
+  --on-accent: #ffffff;
+
+  /* Guld – Utvald/VIP */
+  --gold: #a07f3a;
+  --gold-soft: #f6efdf;
+  --gold-line: #e3d3ad;
+
+  /* Kategorier: markörfärg + två pastelltoner för platshållare */
+  --cat-massage: #3f8577;
+  --cat-massage-soft: #e6f0ec;
+  --cat-massage-soft-2: #cfe3db;
+  --cat-pt: #4472b0;
+  --cat-pt-soft: #e7edf5;
+  --cat-pt-soft-2: #d2ddee;
+  --cat-frisor: #a8517e;
+  --cat-frisor-soft: #f4e8ee;
+  --cat-frisor-soft-2: #ead2df;
+  --cat-kiropraktor: #7d63c9;
+  --cat-kiropraktor-soft: #ede9f7;
+  --cat-kiropraktor-soft-2: #dcd4f0;
+  --cat-naprapat: #5e8f42;
+  --cat-naprapat-soft: #eaf1e4;
+  --cat-naprapat-soft-2: #d6e5cb;
+  --cat-skonhet: #b3524a;
+  --cat-skonhet-soft: #f5e8e6;
+  --cat-skonhet-soft-2: #edd2ce;
+
+  /* Skuggor – mjuka, varma, aldrig hårda */
+  --shadow-color: 32 26 18;
+  --shadow-card: 0 1px 2px rgb(var(--shadow-color) / 0.04), 0 4px 14px rgb(var(--shadow-color) / 0.06);
+  --shadow-lift: 0 2px 6px rgb(var(--shadow-color) / 0.06), 0 16px 36px rgb(var(--shadow-color) / 0.12);
+  --shadow-float: 0 2px 8px rgb(var(--shadow-color) / 0.05), 0 18px 48px rgb(var(--shadow-color) / 0.12);
+
+  color-scheme: light;
+}
+
+/* ---------- Mörkt läge (följer systemet) ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #121212;
+    --surface: #1b1b1b;
+    --surface-sunken: #232220;
+    --line: #2c2c2c;
+    --line-strong: #3a3936;
+
+    --ink: #f1efec;
+    --ink-muted: #a6a39d;
+    --ink-subtle: #7b7871;
+
+    --accent: #d98a4c;
+    --accent-hover: #e69a5e;
+    --accent-soft: #33261c;
+    --on-accent: #1a120c;
+
+    --gold: #d2b06a;
+    --gold-soft: #2a2418;
+    --gold-line: #4a3f27;
+
+    /* I mörkt läge blir pastelltoner grumliga – platshållarna hålls nära
+       neutrala och får bara en svag ton. */
+    --cat-massage: #5fae9e;
+    --cat-massage-soft: #1f2523;
+    --cat-massage-soft-2: #26302d;
+    --cat-pt: #6f97cf;
+    --cat-pt-soft: #1f2228;
+    --cat-pt-soft-2: #262c35;
+    --cat-frisor: #cc78a3;
+    --cat-frisor-soft: #262024;
+    --cat-frisor-soft-2: #31272d;
+    --cat-kiropraktor: #9c86e0;
+    --cat-kiropraktor-soft: #222029;
+    --cat-kiropraktor-soft-2: #2b2835;
+    --cat-naprapat: #82b366;
+    --cat-naprapat-soft: #212520;
+    --cat-naprapat-soft-2: #283027;
+    --cat-skonhet: #d27a71;
+    --cat-skonhet-soft: #272120;
+    --cat-skonhet-soft-2: #322826;
+
+    --shadow-color: 0 0 0;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px rgb(0 0 0 / 0.25);
+    --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.35), 0 16px 36px rgb(0 0 0 / 0.4);
+    --shadow-float: 0 2px 8px rgb(0 0 0 / 0.35), 0 18px 48px rgb(0 0 0 / 0.45);
+
+    color-scheme: dark;
+  }
+}
+
+/* ---------- Tailwind-tokens ---------- */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-line: var(--gold-line);
+
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 20px; /* kort och paneler */
+  --radius-media: 16px; /* bilder inuti kort */
+  --radius-control: 14px; /* knappar, fält */
+
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+  --shadow-float: var(--shadow-float);
+}
+
+/* ---------- Typografisk hierarki ---------- */
+/* Hero-rubrik */
+@utility text-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.25rem, 1.4rem + 4.2vw, 4rem);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+/* Sidrubrik (profil) */
+@utility text-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.875rem, 1.4rem + 2.2vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+/* Sektionsrubrik */
+@utility text-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.375rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+/* Kortrubrik */
+@utility text-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+/* Ingress */
+@utility text-lead {
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  line-height: 1.55;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+/* Metadata: små grå detaljer */
+@utility text-meta {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--ink-muted);
+}
+/* Överrubrik / etikett */
+@utility text-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ---------- Layout ---------- */
+/* Sidbredd med 20px marginal på mobil */
+@utility page-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (min-width: 640px) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Döljer scrollbar för horisontella rader (kategorier på mobil) */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ---------- Bas ---------- */
+html {
+  background: var(--canvas);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* Tydlig fokusmarkering för tangentbord, i accentfärg */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* ---------- Leaflet-anpassningar ----------
+   Dubblerade klassnamn ger högre specificitet än leaflet.css, som laddas
+   efter den här filen. */
+.leaflet-container.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--surface-sunken);
+}
+.leaflet-popup-content-wrapper.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: var(--shadow-lift);
+  background: var(--surface);
+  color: var(--ink);
+}
+.leaflet-popup-tip.leaflet-popup-tip {
+  background: var(--surface);
+}
+.leaflet-popup-content.leaflet-popup-content {
+  margin: 12px 16px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+.leaflet-bar.leaflet-bar a {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+.leaflet-control-attribution.leaflet-control-attribution {
+  font-size: 10px;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  color: var(--ink-muted);
+}
+.leaflet-control-attribution.leaflet-control-attribution a {
+  color: var(--ink-muted);
+}
+
+/* Kartnål: färgad prick med vit kant och mjuk skugga */
+.mapsa-pin {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: var(--pin);
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.28);
+  transition: transform 150ms ease;
+}
+.leaflet-marker-icon:hover .mapsa-pin,
+.leaflet-marker-icon:focus-visible .mapsa-pin {
+  transform: scale(1.18);
+}
+.mapsa-popup {
+  min-width: 160px;
+}
+.mapsa-popup-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  color: var(--ink) !important;
+  text-decoration: none;
+}
+.mapsa-popup-title:hover {
+  text-decoration: underline;
+}
+.mapsa-popup-meta {
+  margin-top: 2px;
+  color: var(--ink-muted);
+}
+.mapsa-popup-price {
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--ink);
+}

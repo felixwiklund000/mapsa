@@ -1,15 +1,43 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { Archivo, IBM_Plex_Sans } from "next/font/google";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+const plex = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-plex",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Mapsa",
-  description: "Hitta och jämför lokala utövare i Karlskrona.",
+  title: "Mapsa – hitta lokala utövare i Karlskrona",
+  description:
+    "Hitta och jämför massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet i Karlskrona. Du bokar direkt hos utövaren.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f6f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="sv" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="sv" className={`${archivo.variable} ${plex.variable} h-full`}>
+      <body className="flex min-h-full flex-col">
+        <SiteHeader />
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

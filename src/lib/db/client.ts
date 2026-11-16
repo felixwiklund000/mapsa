@@ -7,7 +7,8 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { SCHEMA_SQL } from "./schema.ts";
 
-const DB_PATH = resolve(process.env.DATABASE_PATH ?? "data/mapsa.db");
+// Databasfilen ligger utanför koden och ska inte paketeras med bygget.
+const DB_PATH = resolve(/*turbopackIgnore: true*/ process.env.DATABASE_PATH ?? "data/mapsa.db");
 
 let db: DatabaseSync | undefined;
 
