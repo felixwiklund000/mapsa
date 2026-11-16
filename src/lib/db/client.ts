@@ -5,7 +5,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { SCHEMA_SQL } from "./schema";
+import { SCHEMA_SQL } from "./schema.ts";
 
 const DB_PATH = resolve(process.env.DATABASE_PATH ?? "data/mapsa.db");
 
