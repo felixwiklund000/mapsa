@@ -14,6 +14,11 @@ export type Service = {
   durationMin: number | null;
 };
 
+export type PractitionerImage = {
+  id: number;
+  path: string;
+};
+
 export type Practitioner = {
   id: number;
   slug: string;
@@ -26,6 +31,8 @@ export type Practitioner = {
   openingHours: string | null;
   description: string | null;
   bookingUrl: string;
+  email: string;
+  phone: string | null;
   campaign: string | null;
   videoUrl: string | null;
   level: Level;
@@ -34,6 +41,7 @@ export type Practitioner = {
   bookingClicks: number;
   isTestData: boolean;
   services: Service[];
+  images: PractitionerImage[];
 };
 
 type PractitionerRow = {
@@ -48,6 +56,8 @@ type PractitionerRow = {
   opening_hours: string | null;
   description: string | null;
   booking_url: string;
+  email: string;
+  phone: string | null;
   campaign: string | null;
   video_url: string | null;
   level: Level;
@@ -65,8 +75,53 @@ type ServiceRow = {
   duration_min: number | null;
 };
 
-function toPractitioner(row: PractitionerRow, services: Service[]): Practitioner {
-  return {
+type ImageRow = {
+  id: number;
+  practitioner_id: number;
+  path: string;
+};
+
+function groupBy<T extends { practitioner_id: number }, U>(
+  rows: T[],
+  map: (row: T) => U,
+): Map<number, U[]> {
+  const result = new Map<number, U[]>();
+  for (const row of rows) {
+    const list = result.get(row.practitioner_id) ?? [];
+    list.push(map(row));
+    result.set(row.practitioner_id, list);
+  }
+  return result;
+}
+
+/** Hämtar tjänster och bilder för en uppsättning utövarrader och sätter ihop allt. */
+function withRelations(rows: PractitionerRow[]): Practitioner[] {
+  if (rows.length === 0) return [];
+  const db = getDb();
+  const ids = rows.map((r) => r.id);
+  const placeholders = ids.map(() => "?").join(",");
+
+  const services = groupBy(
+    db
+      .prepare(
+        `SELECT id, practitioner_id, name, price_sek, duration_min FROM services
+         WHERE practitioner_id IN (${placeholders}) ORDER BY sort_order, id`,
+      )
+      .all(...ids) as unknown as ServiceRow[],
+    (s): Service => ({ id: s.id, name: s.name, priceSek: s.price_sek, durationMin: s.duration_min }),
+  );
+
+  const images = groupBy(
+    db
+      .prepare(
+        `SELECT id, practitioner_id, path FROM images
+         WHERE practitioner_id IN (${placeholders}) ORDER BY sort_order, id`,
+      )
+      .all(...ids) as unknown as ImageRow[],
+    (i): PractitionerImage => ({ id: i.id, path: i.path }),
+  );
+
+  return rows.map((row) => ({
     id: row.id,
     slug: row.slug,
     name: row.name,
@@ -78,6 +133,8 @@ function toPractitioner(row: PractitionerRow, services: Service[]): Practitioner
     openingHours: row.opening_hours,
     description: row.description,
     bookingUrl: row.booking_url,
+    email: row.email,
+    phone: row.phone,
     campaign: row.campaign,
     videoUrl: row.video_url,
     level: row.level,
@@ -85,37 +142,38 @@ function toPractitioner(row: PractitionerRow, services: Service[]): Practitioner
     registeredAt: row.registered_at,
     bookingClicks: row.booking_clicks,
     isTestData: row.is_test_data === 1,
-    services,
-  };
+    services: services.get(row.id) ?? [],
+    images: images.get(row.id) ?? [],
+  }));
 }
 
 /** Alla publicerade utövare. Mellan och VIP först (topplacering), sedan i namnordning. */
 export function listPublishedPractitioners(): Practitioner[] {
-  const db = getDb();
-  const rows = db
+  const rows = getDb()
     .prepare(
       `SELECT * FROM practitioners
        WHERE status = 'publicerad'
        ORDER BY CASE WHEN level IN ('mellan', 'vip') THEN 0 ELSE 1 END, name COLLATE NOCASE`,
     )
     .all() as unknown as PractitionerRow[];
+  return withRelations(rows);
+}
 
-  if (rows.length === 0) return [];
+/** En publicerad utövare, eller undefined om den inte finns eller inte är publicerad. */
+export function getPublishedPractitionerBySlug(slug: string): Practitioner | undefined {
+  const row = getDb()
+    .prepare(`SELECT * FROM practitioners WHERE slug = ? AND status = 'publicerad'`)
+    .get(slug) as unknown as PractitionerRow | undefined;
+  return row ? withRelations([row])[0] : undefined;
+}
 
-  const serviceRows = db
+/** Räknar upp klick till bokning. Returnerar true om en publicerad utövare uppdaterades. */
+export function incrementBookingClicks(slug: string): boolean {
+  const result = getDb()
     .prepare(
-      `SELECT id, practitioner_id, name, price_sek, duration_min FROM services
-       WHERE practitioner_id IN (SELECT id FROM practitioners WHERE status = 'publicerad')
-       ORDER BY sort_order, id`,
+      `UPDATE practitioners SET booking_clicks = booking_clicks + 1
+       WHERE slug = ? AND status = 'publicerad'`,
     )
-    .all() as unknown as ServiceRow[];
-
-  const byPractitioner = new Map<number, Service[]>();
-  for (const s of serviceRows) {
-    const list = byPractitioner.get(s.practitioner_id) ?? [];
-    list.push({ id: s.id, name: s.name, priceSek: s.price_sek, durationMin: s.duration_min });
-    byPractitioner.set(s.practitioner_id, list);
-  }
-
-  return rows.map((row) => toPractitioner(row, byPractitioner.get(row.id) ?? []));
+    .run(slug);
+  return result.changes > 0;
 }

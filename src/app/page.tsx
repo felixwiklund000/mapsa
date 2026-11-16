@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { connection } from "next/server";
 import { getCategory } from "@/lib/categories";
 import { listPublishedPractitioners } from "@/lib/db/practitioners";
@@ -41,7 +42,11 @@ async function PractitionerList() {
                 className="inline-block size-2.5 rounded-full"
                 style={{ backgroundColor: category?.color }}
               />
-              <h2 className="font-semibold">{p.name}</h2>
+              <h2 className="font-semibold">
+                <Link href={`/utovare/${p.slug}`} className="hover:underline underline-offset-2">
+                  {p.name}
+                </Link>
+              </h2>
               {p.isTestData && (
                 <span className="rounded border border-neutral-300 px-1.5 text-xs text-neutral-600">
                   Testdata
