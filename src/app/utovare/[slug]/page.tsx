@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { ArrowLeft } from "lucide-react";
-import { formatPrice, lowestPrice } from "@/components/practitioner-card";
+import { ArrowLeft, Clock, Mail, MapPin, Phone, Tag } from "lucide-react";
+import { CategoryDot } from "@/components/category-dot";
+import { PractitionerMap } from "@/components/practitioner-map";
+import { formatPrice, lowestPrice } from "@/components/practitioner-row";
 import { getCategory } from "@/lib/categories";
 import { getPublishedPractitionerBySlug, type Practitioner } from "@/lib/db/practitioners";
 import { isExternalUrl, isValidBookingUrl, toVideoEmbedUrl } from "@/lib/urls";
@@ -26,13 +28,7 @@ export async function generateMetadata(props: PageProps<"/utovare/[slug]">): Pro
 
 export default function PractitionerPage(props: PageProps<"/utovare/[slug]">) {
   return (
-    <main className="page-container pt-4 lg:pt-6">
-      <Link
-        href="/"
-        className="text-small -ml-1 inline-flex h-11 items-center gap-1.5 rounded-control px-1 text-muted transition-colors hover:text-ink"
-      >
-        <ArrowLeft className="size-4" aria-hidden /> Alla utövare
-      </Link>
+    <main className="flex-1">
       <Suspense fallback={<ProfileSkeleton />}>
         <Profile params={props.params} />
       </Suspense>
@@ -55,148 +51,158 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
   const videoUrl = p.level === "vip" ? p.videoUrl : null;
 
   return (
-    <article className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16">
-      <div className="min-w-0">
-        <Gallery practitioner={p} />
+    <article>
+      <div className="lg:page-container lg:pt-6">
+        <Cover practitioner={p} />
+      </div>
 
-        <header className={p.images.length > 0 ? "mt-8" : ""}>
-          <h1 className="text-title text-ink">{p.name}</h1>
-          <p className="mt-2 text-muted">
-            {category?.name} · {p.address ? `${p.address}, ` : ""}
-            {p.area}, Karlskrona
-          </p>
-          {p.isTestData && (
-            <p className="text-small mt-1 text-faint">Testdata – det här är en påhittad exempelprofil.</p>
-          )}
-        </header>
+      <div className="page-container pt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16 lg:pt-10">
+        <div className="min-w-0">
+          <header>
+            <h1 className="text-display">{p.name}</h1>
+            <p className="mt-2 flex items-center gap-2 text-muted">
+              <CategoryDot slug={p.category} />
+              {category?.name} · {p.area}
+            </p>
+            {p.isTestData && <p className="text-small mt-1 text-faint">Testdata – påhittad exempelprofil.</p>}
+          </header>
 
-        {p.description && <p className="mt-6 max-w-prose whitespace-pre-line text-ink">{p.description}</p>}
+          {p.description && <p className="mt-5 max-w-prose text-[1.0625rem] whitespace-pre-line">{p.description}</p>}
 
-        {p.campaign && p.level !== "grundlistning" && (
-          <p className="mt-6 max-w-prose border-l-2 border-ink pl-4 text-ink">
-            <span className="font-semibold">Erbjudande:</span> {p.campaign}
-          </p>
-        )}
-
-        <section className="mt-12" aria-labelledby="tjanster">
-          <h2 id="tjanster" className="text-heading text-ink">
-            Tjänster
-          </h2>
-          {p.services.length === 0 ? (
-            <p className="mt-3 text-muted">Inga tjänster upplagda än.</p>
-          ) : (
-            <ul className="mt-3 border-t border-line">
-              {p.services.map((s) => (
-                <li key={s.id} className="flex items-baseline justify-between gap-6 border-b border-line py-4">
-                  <span className="min-w-0 text-ink">
-                    {s.name}
-                    {s.durationMin && <span className="text-muted"> · {s.durationMin} min</span>}
-                  </span>
-                  <span className="shrink-0 text-ink tabular-nums">{formatPrice(s.priceSek)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {videoUrl && <Video url={videoUrl} name={p.name} />}
-
-        <section className="mt-12" aria-labelledby="info">
-          <h2 id="info" className="text-heading text-ink">
-            Öppettider och kontakt
-          </h2>
-          <dl className="mt-3 border-t border-line">
-            <InfoRow label="Öppettider">{p.openingHours ?? "Ej angivet"}</InfoRow>
-            <InfoRow label="E-post">
-              <a href={`mailto:${p.email}`} className="break-all text-accent hover:text-accent-hover hover:underline">
-                {p.email}
-              </a>
+          <ul className="mt-8 border-t border-line">
+            <InfoRow icon={<MapPin className="size-5" aria-hidden />} label="Adress">
+              {p.address ? `${p.address}, ` : ""}
+              {p.area}, Karlskrona
             </InfoRow>
+            {p.openingHours && (
+              <InfoRow icon={<Clock className="size-5" aria-hidden />} label="Öppettider">
+                {p.openingHours}
+              </InfoRow>
+            )}
             {p.phone && (
-              <InfoRow label="Telefon">
-                <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className="text-accent hover:text-accent-hover hover:underline">
+              <InfoRow icon={<Phone className="size-5" aria-hidden />} label="Telefon">
+                <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className="underline-offset-2 hover:underline">
                   {p.phone}
                 </a>
               </InfoRow>
             )}
-          </dl>
-        </section>
+            <InfoRow icon={<Mail className="size-5" aria-hidden />} label="E-post">
+              <a href={`mailto:${p.email}`} className="break-all underline-offset-2 hover:underline">
+                {p.email}
+              </a>
+            </InfoRow>
+            {p.campaign && p.level !== "grundlistning" && (
+              <InfoRow icon={<Tag className="size-5" aria-hidden />} label="Erbjudande">
+                {p.campaign}
+              </InfoRow>
+            )}
+          </ul>
+
+          <section className="mt-10" aria-labelledby="tjanster">
+            <h2 id="tjanster" className="text-heading">
+              Tjänster
+            </h2>
+            {p.services.length === 0 ? (
+              <p className="mt-3 text-muted">Inga tjänster upplagda än.</p>
+            ) : (
+              <ul className="mt-2">
+                {p.services.map((s) => (
+                  <li key={s.id} className="flex items-center justify-between gap-6 border-b border-line py-4 last:border-b-0">
+                    <div className="min-w-0">
+                      <p className="font-semibold">{s.name}</p>
+                      {s.durationMin && <p className="text-small text-muted">{s.durationMin} min</p>}
+                    </div>
+                    <p className="shrink-0 font-bold tabular-nums">{formatPrice(s.priceSek)}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {videoUrl && <Video url={videoUrl} name={p.name} />}
+        </div>
+
+        {/* Bokning, desktop: panel till höger */}
+        <aside className="hidden lg:block">
+          <div className="sticky top-8 rounded-media border border-line p-6">
+            {price !== null && (
+              <p className="text-heading">
+                <span className="text-base font-normal text-muted">från </span>
+                {formatPrice(price)}
+              </p>
+            )}
+            {booking ? (
+              <>
+                <BookingButton
+                  slug={p.slug}
+                  href={booking.href}
+                  external={booking.external}
+                  label="Boka"
+                  className="mt-4 w-full"
+                />
+                <p className="text-small mt-3 text-muted">{note}</p>
+              </>
+            ) : (
+              <p className="text-small mt-3 text-muted">Bokningslänk saknas. Kontakta utövaren direkt.</p>
+            )}
+          </div>
+        </aside>
       </div>
 
-      {/* Bokning: ruta till höger på desktop */}
-      <aside className="hidden lg:block">
-        <div className="sticky top-8 rounded-media border border-line p-6">
-          {price !== null && <p className="text-heading text-ink">från {formatPrice(price)}</p>}
-          {booking ? (
-            <>
-              <BookingButton
-                slug={p.slug}
-                href={booking.href}
-                external={booking.external}
-                label="Boka tid"
-                className="mt-4 w-full"
-              />
-              <p className="text-small mt-3 text-muted">{note}</p>
-            </>
-          ) : (
-            <p className="text-small mt-3 text-muted">Bokningslänk saknas. Kontakta utövaren direkt.</p>
-          )}
-        </div>
-      </aside>
-
-      {/* Bokning: fast rad längst ner på mobil */}
+      {/* Bokning, mobil: fast längst ner */}
       {booking && (
-        <div className="sticky bottom-0 z-40 -mx-5 mt-12 border-t border-line bg-canvas px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-8 sm:px-8 lg:hidden">
-          <div className="flex items-center justify-between gap-4">
-            {price !== null && <p className="text-ink">från {formatPrice(price)}</p>}
-            <BookingButton slug={p.slug} href={booking.href} external={booking.external} label="Boka tid" className="min-w-40" />
-          </div>
-          <p className="sr-only">{note}</p>
+        <div className="sticky bottom-0 z-[1001] mt-10 border-t border-line bg-canvas px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+          <BookingButton slug={p.slug} href={booking.href} external={booking.external} label="Boka" className="w-full" />
+          <p className="mt-2 text-center text-xs text-muted">Du går vidare till utövarens egen bokning.</p>
         </div>
       )}
     </article>
   );
 }
 
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+// Stor bild överst. Saknas foto visas platsen på en karta i stället.
+function Cover({ practitioner: p }: { practitioner: Practitioner }) {
+  const first = p.images[0];
   return (
-    <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-4 border-b border-line py-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
-      <dt className="text-muted">{label}</dt>
-      <dd className="whitespace-pre-line text-ink">{children}</dd>
+    <div className="relative isolate h-60 overflow-hidden bg-fill sm:h-80 lg:h-96 lg:rounded-media">
+      {first ? (
+        // eslint-disable-next-line @next/next/no-img-element -- uppladdade bilder optimeras senare
+        <img src={first.path} alt={p.name} className="h-full w-full object-cover" />
+      ) : (
+        <PractitionerMap
+          variant="location"
+          label={`Karta: ${p.name} i ${p.area}`}
+          points={[{ slug: p.slug, name: p.name, area: p.area, categoryName: "", priceFrom: null, lat: p.lat, lng: p.lng }]}
+        />
+      )}
+      <Link
+        href="/"
+        aria-label="Alla utövare"
+        className="absolute top-3 left-3 z-[1000] flex size-11 items-center justify-center rounded-full bg-canvas text-ink transition-colors hover:bg-fill lg:top-4 lg:left-4"
+      >
+        <ArrowLeft className="size-5" strokeWidth={2.25} aria-hidden />
+      </Link>
     </div>
   );
 }
 
-// Visas bara när det finns riktiga bilder.
-function Gallery({ practitioner: p }: { practitioner: Practitioner }) {
-  if (p.images.length === 0) return null;
-  const [first, ...rest] = p.images;
+function InfoRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div>
-      {/* eslint-disable-next-line @next/next/no-img-element -- uppladdade bilder optimeras senare */}
-      <img src={first.path} alt={p.name} className="aspect-[16/10] w-full rounded-media object-cover" />
-      {rest.length > 0 && (
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          {rest.slice(0, 4).map((img, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={img.id}
-              src={img.path}
-              alt={`${p.name}, bild ${i + 2}`}
-              className="aspect-square w-full rounded-media object-cover"
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    <li className="flex gap-4 border-b border-line py-4">
+      <span className="mt-0.5 shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <p className="sr-only">{label}</p>
+        <div className="whitespace-pre-line">{children}</div>
+      </div>
+    </li>
   );
 }
 
 function Video({ url, name }: { url: string; name: string }) {
   const embed = toVideoEmbedUrl(url);
   return (
-    <section className="mt-12" aria-labelledby="video">
-      <h2 id="video" className="text-heading text-ink">
+    <section className="mt-10" aria-labelledby="video">
+      <h2 id="video" className="text-heading">
         Video
       </h2>
       {embed ? (
@@ -209,7 +215,7 @@ function Video({ url, name }: { url: string; name: string }) {
           loading="lazy"
         />
       ) : (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-accent hover:underline">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block underline">
           Se video från {name}
         </a>
       )}
@@ -219,10 +225,14 @@ function Video({ url, name }: { url: string; name: string }) {
 
 function ProfileSkeleton() {
   return (
-    <div className="mt-4" aria-busy="true" aria-label="Hämtar profil">
-      <div className="h-9 w-2/3 animate-pulse rounded bg-subtle" />
-      <div className="mt-3 h-4 w-1/3 animate-pulse rounded bg-subtle" />
-      <div className="mt-8 h-24 max-w-prose animate-pulse rounded bg-subtle" />
+    <div aria-busy="true" aria-label="Hämtar profil">
+      <div className="lg:page-container lg:pt-6">
+        <div className="h-60 animate-pulse bg-fill sm:h-80 lg:h-96 lg:rounded-media" />
+      </div>
+      <div className="page-container pt-6">
+        <div className="h-9 w-2/3 animate-pulse rounded bg-fill" />
+        <div className="mt-3 h-4 w-1/3 animate-pulse rounded bg-fill" />
+      </div>
     </div>
   );
 }

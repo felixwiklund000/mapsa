@@ -2,89 +2,79 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { CategoryFilter } from "@/components/category-filter";
-import { formatPrice, lowestPrice, PractitionerCard } from "@/components/practitioner-card";
-import { ResultsView } from "@/components/results-view";
+import { HomeShell } from "@/components/home-shell";
+import { formatPrice, lowestPrice, PractitionerRow } from "@/components/practitioner-row";
 import { SearchBar } from "@/components/search-bar";
+import { SiteFooter } from "@/components/site-footer";
 import { getCategory } from "@/lib/categories";
 import { listPublishedPractitioners, type Practitioner } from "@/lib/db/practitioners";
 import { filterPractitioners, hasActiveFilters, parseFilters, type Filters } from "@/lib/search";
 
-// Startsida: rubrik, sök, kategorifilter och resultat (lista + karta).
-// Innehållet först – utövarna ska synas utan att man scrollar.
-
-type SearchParams = PageProps<"/">["searchParams"];
+// Startsida: karta + lista. Se HomeShell för layouten.
 
 export default function Home(props: PageProps<"/">) {
   return (
-    <main className="page-container pt-8 lg:pt-12">
-      <h1 className="text-title max-w-2xl text-ink">Massage, PT, frisör och mer i Karlskrona</h1>
-      <p className="mt-2 text-muted">Jämför här. Boka direkt hos utövaren.</p>
-
-      <Suspense fallback={<SearchAndFilter />}>
-        <SearchAndFilterWithParams searchParams={props.searchParams} />
-      </Suspense>
-
-      <Suspense fallback={<ResultsSkeleton />}>
-        <Results searchParams={props.searchParams} />
+    <main className="flex-1">
+      <Suspense fallback={<HomeFallback />}>
+        <HomeContent searchParams={props.searchParams} />
       </Suspense>
     </main>
   );
 }
 
-function SearchAndFilter({ filters }: { filters?: Filters }) {
-  return (
-    <div className="mt-6 space-y-4 lg:mt-8">
-      <SearchBar filters={filters} />
-      <CategoryFilter filters={filters} />
-    </div>
-  );
-}
-
-async function SearchAndFilterWithParams({ searchParams }: { searchParams: SearchParams }) {
-  return <SearchAndFilter filters={parseFilters(await searchParams)} />;
-}
-
-async function Results({ searchParams }: { searchParams: SearchParams }) {
+async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
   await connection();
   const filters = parseFilters(await searchParams);
   const all = await listPublishedPractitioners();
   const results = filterPractitioners(all, filters);
+  const testCount = results.filter((p) => p.isTestData).length;
+  const allTest = results.length > 0 && testCount === results.length;
 
   return (
-    <section className="mt-8 border-t border-line pt-6" aria-labelledby="resultat">
-      <div className="mb-6 flex items-baseline justify-between gap-4">
-        <h2 id="resultat" className="text-heading text-ink">
-          {results.length} utövare
-          {filters.area && <span className="font-normal text-muted"> i {filters.area}</span>}
-        </h2>
-        {hasActiveFilters(filters) && results.length > 0 && (
-          <Link
-            href="/"
-            scroll={false}
-            className="text-small -my-3 inline-flex h-11 items-center font-medium text-accent hover:text-accent-hover hover:underline"
-          >
-            Rensa filter
+    <HomeShell
+      search={<SearchBar filters={filters} />}
+      header={<ListHeader filters={filters} count={results.length} allTest={allTest} />}
+      list={
+        results.length === 0 ? (
+          <EmptyState filters={filters} all={all} />
+        ) : (
+          <ul className="divide-y divide-line">
+            {results.map((p) => (
+              <li key={p.id}>
+                <PractitionerRow practitioner={p} showTestLabel={testCount > 0 && !allTest} />
+              </li>
+            ))}
+          </ul>
+        )
+      }
+      footer={<SiteFooter inline />}
+      points={results.map(toMapPoint)}
+    />
+  );
+}
+
+function ListHeader({ filters, count, allTest }: { filters?: Filters; count?: number; allTest?: boolean }) {
+  return (
+    <>
+      <div className="mt-1 flex items-end justify-between gap-4 lg:mt-0">
+        <div>
+          <h1 className="text-title lg:text-display">Utövare i Karlskrona</h1>
+          <p className="text-small mt-1 text-muted">
+            {count === undefined ? " " : `${count} ${count === 1 ? "träff" : "träffar"}`}
+            {filters?.area && ` i ${filters.area}`}
+            {allTest && " · påhittade testprofiler"}
+          </p>
+        </div>
+        {filters && hasActiveFilters(filters) && (
+          <Link href="/" scroll={false} className="btn-secondary shrink-0 text-sm">
+            Rensa
           </Link>
         )}
       </div>
-
-      <ResultsView
-        list={
-          results.length === 0 ? (
-            <EmptyState filters={filters} all={all} />
-          ) : (
-            <ul className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
-              {results.map((p) => (
-                <li key={p.id}>
-                  <PractitionerCard practitioner={p} />
-                </li>
-              ))}
-            </ul>
-          )
-        }
-        points={results.map(toMapPoint)}
-      />
-    </section>
+      <div className="mt-4">
+        <CategoryFilter filters={filters} />
+      </div>
+    </>
   );
 }
 
@@ -101,10 +91,6 @@ function toMapPoint(p: Practitioner) {
   };
 }
 
-// Sekundär knapp: sidans huvudknapp är Sök.
-const secondaryButton =
-  "inline-flex h-11 items-center rounded-control border border-line-strong px-5 font-medium text-ink transition-colors hover:border-ink active:bg-subtle";
-
 function EmptyState({ filters, all }: { filters: Filters; all: Practitioner[] }) {
   // En vald kategori som saknar utövare helt: be utövare anmäla sig.
   const emptyCategory =
@@ -114,40 +100,47 @@ function EmptyState({ filters, all }: { filters: Filters; all: Practitioner[] })
 
   if (emptyCategory) {
     return (
-      <div className="max-w-xl rounded-media border border-line px-6 py-8">
-        <p className="text-heading text-ink">Inga utövare inom {emptyCategory.name.toLocaleLowerCase("sv-SE")} än</p>
-        <p className="mt-1 max-w-md text-muted">Är du utövare? Bli en av de första. Första månaden är gratis.</p>
-        <Link href="/bli-utovare" className={`${secondaryButton} mt-6`}>
+      <div className="py-6">
+        <p className="text-heading">Inga utövare inom {emptyCategory.name.toLocaleLowerCase("sv-SE")} än</p>
+        <p className="mt-1 text-muted">Är du utövare? Bli en av de första. Första månaden är gratis.</p>
+        <Link href="/bli-utovare" className="btn-secondary mt-5">
           Lista din verksamhet
         </Link>
       </div>
     );
   }
-
   return (
-    <div className="max-w-xl rounded-media border border-line px-6 py-8">
-      <p className="text-heading text-ink">Inga träffar</p>
-      <p className="mt-1 max-w-md text-muted">Prova ett annat sökord, område eller en annan kategori.</p>
-      <Link href="/" scroll={false} className={`${secondaryButton} mt-6`}>
+    <div className="py-6">
+      <p className="text-heading">Inga träffar</p>
+      <p className="mt-1 text-muted">Prova ett annat sökord, område eller en annan kategori.</p>
+      <Link href="/" scroll={false} className="btn-secondary mt-5">
         Visa alla utövare
       </Link>
     </div>
   );
 }
 
-function ResultsSkeleton() {
+// Visas medan data hämtas: samma layout, utan innehåll.
+function HomeFallback() {
   return (
-    <div className="mt-8 border-t border-line pt-6" aria-busy="true" aria-label="Hämtar utövare">
-      <div className="mb-6 h-6 w-28 animate-pulse rounded bg-subtle" />
-      <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 3 }, (_, i) => (
-          <div key={i}>
-            <div className="aspect-[3/2] animate-pulse rounded-media bg-subtle" />
-            <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-subtle" />
-            <div className="mt-2 h-3.5 w-1/2 animate-pulse rounded bg-subtle" />
-          </div>
-        ))}
-      </div>
-    </div>
+    <HomeShell
+      search={<SearchBar />}
+      header={<ListHeader />}
+      list={
+        <ul aria-busy="true" aria-label="Hämtar utövare">
+          {Array.from({ length: 4 }, (_, i) => (
+            <li key={i} className="flex items-center gap-4 py-3">
+              <div className="size-16 animate-pulse rounded-control bg-fill" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-1/2 animate-pulse rounded bg-fill" />
+                <div className="h-3 w-1/3 animate-pulse rounded bg-fill" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      }
+      footer={null}
+      points={[]}
+    />
   );
 }

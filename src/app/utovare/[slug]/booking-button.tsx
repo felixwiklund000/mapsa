@@ -35,7 +35,7 @@ export function BookingButton({
       href={href}
       onClick={countClick}
       {...(external ? { target: "_blank", rel: "noopener noreferrer nofollow" } : {})}
-      className={`inline-flex min-h-12 items-center justify-center gap-1.5 rounded-control bg-accent px-5 py-2.5 text-center leading-snug font-semibold text-on-accent transition-colors hover:bg-accent-hover active:bg-accent-hover/90 ${className}`}
+      className={`btn-primary ${className}`}
     >
       <span>{label}</span>
       {external && (

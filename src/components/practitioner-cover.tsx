@@ -1,13 +1,14 @@
-// Bild för en utövare. Saknas bild visas en lugn grå yta med initialen,
-// så att korten i rutnätet håller samma form.
+// Bild för en utövare. Saknas bild visas en grå yta med initialen.
 
 export function PractitionerCover({
   name,
   imagePath,
+  size = "sm",
   className = "",
 }: {
   name: string;
   imagePath?: string | null;
+  size?: "sm" | "lg";
   className?: string;
 }) {
   if (imagePath) {
@@ -20,9 +21,12 @@ export function PractitionerCover({
     <div
       role="img"
       aria-label={`${name}, ingen bild`}
-      className={`flex h-full w-full items-center justify-center bg-subtle ${className}`}
+      className={`flex h-full w-full items-center justify-center bg-fill ${className}`}
     >
-      <span aria-hidden className="font-display text-3xl font-semibold tracking-[-0.02em] text-faint/70">
+      <span
+        aria-hidden
+        className={`font-extrabold tracking-[-0.04em] text-faint ${size === "lg" ? "text-6xl" : "text-xl"}`}
+      >
         {name.trim().charAt(0).toLocaleUpperCase("sv-SE")}
       </span>
     </div>

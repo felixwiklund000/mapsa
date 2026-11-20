@@ -1,19 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, IBM_Plex_Sans } from "next/font/google";
+import { Archivo } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 const archivo = Archivo({
   subsets: ["latin"],
   variable: "--font-archivo",
-  display: "swap",
-});
-
-const plex = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-plex",
   display: "swap",
 });
 
@@ -37,17 +29,16 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#121212" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="sv" className={`${archivo.variable} ${plex.variable} h-full`}>
+    <html lang="sv" className={`${archivo.variable} h-full`}>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
-        <div className="flex-1">{children}</div>
-        <SiteFooter />
+        <div className="flex flex-1 flex-col">{children}</div>
       </body>
     </html>
   );

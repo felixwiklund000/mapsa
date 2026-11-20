@@ -8,8 +8,8 @@ export const metadata: Metadata = {
 
 export default function TestdataPage() {
   return (
-    <main className="page-container pt-16 lg:pt-24">
-      <h1 className="text-title text-ink">Det här är testdata</h1>
+    <main className="page-container flex-1 pt-12 lg:pt-20">
+      <h1 className="text-display">Det här är testdata</h1>
       <div className="mt-4 max-w-prose space-y-4 text-ink">
         <p>
           Utövaren du klickade på är påhittad. Vi använder exempelprofiler medan vi bygger Mapsa. De är märkta
@@ -22,7 +22,7 @@ export default function TestdataPage() {
       </div>
       <Link
         href="/"
-        className="mt-8 inline-flex h-11 items-center rounded-control bg-accent px-5 font-semibold text-on-accent transition-colors hover:bg-accent-hover"
+        className="btn-primary mt-8 w-full sm:w-auto"
       >
         Tillbaka till alla utövare
       </Link>

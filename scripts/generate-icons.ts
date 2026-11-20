@@ -9,7 +9,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
 
-const ACCENT = "#a85a26";
+const ACCENT = "#000000"; // ikonens bakgrund (svart, som resten av designen)
 const PIN_COLOR = "#ffffff";
 
 // Kartnålen från loggan (src/components/site-header.tsx), ritad i en 22×26-ruta.
