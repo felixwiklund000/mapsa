@@ -36,7 +36,7 @@ export const viewport: Viewport = {
   // för notch och hemknapp läggs på i header och bokningsfält.
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f6f2" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#121212" },
   ],
 };

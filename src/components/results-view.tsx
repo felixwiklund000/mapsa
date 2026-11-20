@@ -4,47 +4,37 @@ import { useState, type ReactNode } from "react";
 import { List, Map as MapIcon } from "lucide-react";
 import { PractitionerMap, type MapPoint } from "./practitioner-map";
 
-// Mobil: segmentknapp Lista/Karta. Desktop (lg+): kort till vänster,
-// sticky karta till höger.
+// Desktop (lg+): lista till vänster, karta till höger.
+// Mobil: listan först. En flytande knapp växlar till kartan och tillbaka.
 
 export function ResultsView({ list, points }: { list: ReactNode; points: MapPoint[] }) {
-  const [tab, setTab] = useState<"lista" | "karta">("lista");
+  const [view, setView] = useState<"lista" | "karta">("lista");
+  const showMap = view === "karta";
 
-  const tabClass = (active: boolean) =>
-    `inline-flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-      active ? "bg-surface text-ink shadow-card" : "text-ink-muted hover:text-ink"
-    }`;
+  // Utan träffar har kartan inget att visa – då får listan (tomt läge) hela bredden.
+  if (points.length === 0) return <div>{list}</div>;
 
   return (
-    <div>
-      <div role="tablist" aria-label="Visa som" className="mb-5 flex rounded-full bg-sunken p-1 lg:hidden">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "lista"}
-          onClick={() => setTab("lista")}
-          className={tabClass(tab === "lista")}
-        >
-          <List className="size-4" aria-hidden /> Lista
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === "karta"}
-          onClick={() => setTab("karta")}
-          className={tabClass(tab === "karta")}
-        >
-          <MapIcon className="size-4" aria-hidden /> Karta
-        </button>
-      </div>
-
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,30rem)]">
-        <div className={tab === "lista" ? "block" : "hidden lg:block"}>{list}</div>
+    <div className="relative">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,25rem)] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
+        <div className={showMap ? "hidden lg:block" : "block"}>{list}</div>
         <div
-          className={`${tab === "karta" ? "block" : "hidden lg:block"} relative isolate z-0 h-[68vh] overflow-hidden rounded-card shadow-card ring-1 ring-line lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] lg:max-h-[720px]`}
+          className={`${showMap ? "block" : "hidden lg:block"} relative isolate z-0 h-[calc(100svh-12rem)] min-h-96 overflow-hidden rounded-media border border-line lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:max-h-[760px]`}
         >
           <PractitionerMap points={points} />
         </div>
+      </div>
+
+      {/* Växla lista/karta på mobil */}
+      <div className="pointer-events-none sticky bottom-[max(1rem,env(safe-area-inset-bottom))] z-10 mt-6 flex justify-center lg:hidden">
+        <button
+          type="button"
+          onClick={() => setView(showMap ? "lista" : "karta")}
+          className="pointer-events-auto inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-canvas shadow-pop active:scale-[0.97]"
+        >
+          {showMap ? <List className="size-4" aria-hidden /> : <MapIcon className="size-4" aria-hidden />}
+          {showMap ? "Visa lista" : "Visa karta"}
+        </button>
       </div>
     </div>
   );

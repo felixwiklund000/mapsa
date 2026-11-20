@@ -3,11 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { ArrowLeft, Clock, Mail, MapPin, Phone, PlayCircle, Tag } from "lucide-react";
-import { CategoryIcon, categoryVars } from "@/components/category-icon";
+import { ArrowLeft } from "lucide-react";
 import { formatPrice, lowestPrice } from "@/components/practitioner-card";
-import { PractitionerCover } from "@/components/practitioner-cover";
-import { LevelBadge, TestDataBadge } from "@/components/ui/badges";
 import { getCategory } from "@/lib/categories";
 import { getPublishedPractitionerBySlug, type Practitioner } from "@/lib/db/practitioners";
 import { isExternalUrl, isValidBookingUrl, toVideoEmbedUrl } from "@/lib/urls";
@@ -29,10 +26,10 @@ export async function generateMetadata(props: PageProps<"/utovare/[slug]">): Pro
 
 export default function PractitionerPage(props: PageProps<"/utovare/[slug]">) {
   return (
-    <main className="page-container pt-5 sm:pt-8">
+    <main className="page-container pt-4 lg:pt-6">
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 rounded-full py-1.5 pr-3 text-sm font-medium text-ink-muted transition hover:text-ink"
+        className="text-small -ml-1 inline-flex h-11 items-center gap-1.5 rounded-control px-1 text-muted transition-colors hover:text-ink"
       >
         <ArrowLeft className="size-4" aria-hidden /> Alla utövare
       </Link>
@@ -50,190 +47,138 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
   if (!p) notFound();
 
   const category = getCategory(p.category);
-  const v = categoryVars(p.category);
   const price = lowestPrice(p);
   const booking = isValidBookingUrl(p.bookingUrl)
     ? { href: p.bookingUrl, external: isExternalUrl(p.bookingUrl) }
     : null;
-  const disclaimer = `Mapsa bokar inte åt dig – du går vidare till ${genitive(p.name)} egen bokning.`;
+  const note = `Mapsa bokar inte åt dig. Du går vidare till ${genitive(p.name)} egen bokning.`;
+  const videoUrl = p.level === "vip" ? p.videoUrl : null;
 
   return (
-    <article className="mt-4">
-      {/* Bild / header */}
-      <Gallery practitioner={p} />
+    <article className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-16">
+      <div className="min-w-0">
+        <Gallery practitioner={p} />
 
-      <div className="mt-8 lg:mt-12 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-14">
-        <div>
-          <header>
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold"
-                style={{ backgroundColor: v.soft, color: v.color }}
-              >
-                <CategoryIcon slug={p.category} className="size-4" strokeWidth={2.25} />
-                {category?.name}
-              </span>
-              <LevelBadge level={p.level} />
-            </div>
-            <h1 className="text-title mt-4 text-ink">{p.name}</h1>
-            <p className="mt-3 flex items-center gap-1.5 text-ink-muted">
-              <MapPin className="size-4.5 shrink-0" aria-hidden />
-              {p.address ? `${p.address}, ` : ""}
-              {p.area}, Karlskrona
-            </p>
-          </header>
-
-          {p.campaign && p.level !== "grundlistning" && (
-            <div className="mt-8 flex gap-3 rounded-card bg-accent-soft px-5 py-4">
-              <Tag className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
-              <p>
-                <span className="font-semibold text-ink">Kampanj </span>
-                <span className="text-ink">{p.campaign}</span>
-              </p>
-            </div>
+        <header className={p.images.length > 0 ? "mt-8" : ""}>
+          <h1 className="text-title text-ink">{p.name}</h1>
+          <p className="mt-2 text-muted">
+            {category?.name} · {p.address ? `${p.address}, ` : ""}
+            {p.area}, Karlskrona
+          </p>
+          {p.isTestData && (
+            <p className="text-small mt-1 text-faint">Testdata – det här är en påhittad exempelprofil.</p>
           )}
+        </header>
 
-          {p.description && (
-            <section className="mt-10">
-              <h2 className="text-heading text-ink">Om {p.name}</h2>
-              <p className="mt-3 max-w-prose text-[1.0625rem] leading-relaxed whitespace-pre-line text-ink">
-                {p.description}
-              </p>
-            </section>
-          )}
+        {p.description && <p className="mt-6 max-w-prose whitespace-pre-line text-ink">{p.description}</p>}
 
-          <section className="mt-12">
-            <h2 className="text-heading text-ink">Tjänster och priser</h2>
-            {p.services.length === 0 ? (
-              <p className="text-meta mt-3">Utövaren har inte lagt upp några tjänster än.</p>
-            ) : (
-              <ul className="mt-4 divide-y divide-line overflow-hidden rounded-card bg-surface shadow-card">
-                {p.services.map((s) => (
-                  <li key={s.id} className="flex items-center justify-between gap-4 px-5 py-4 sm:px-6">
-                    <div className="min-w-0">
-                      <p className="font-medium text-ink">{s.name}</p>
-                      {s.durationMin && (
-                        <p className="text-meta mt-0.5 flex items-center gap-1">
-                          <Clock className="size-3.5" aria-hidden /> {s.durationMin} min
-                        </p>
-                      )}
-                    </div>
-                    <p className="shrink-0 font-display text-[1.0625rem] font-bold tracking-[-0.01em] text-ink tabular-nums">
-                      {formatPrice(s.priceSek)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+        {p.campaign && p.level !== "grundlistning" && (
+          <p className="mt-6 max-w-prose border-l-2 border-ink pl-4 text-ink">
+            <span className="font-semibold">Erbjudande:</span> {p.campaign}
+          </p>
+        )}
 
-          {p.level === "vip" && <Video url={p.videoUrl} name={p.name} />}
-
-          <section className="mt-12 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-card bg-surface p-6 shadow-card">
-              <h2 className="text-card-title flex items-center gap-2 text-ink">
-                <Clock className="size-4.5 text-ink-muted" aria-hidden /> Öppettider
-              </h2>
-              <p className="mt-2 whitespace-pre-line text-ink">{p.openingHours ?? "Ej angivet"}</p>
-            </div>
-            <div className="rounded-card bg-surface p-6 shadow-card">
-              <h2 className="text-card-title flex items-center gap-2 text-ink">
-                <Mail className="size-4.5 text-ink-muted" aria-hidden /> Kontakt
-              </h2>
-              <ul className="mt-2 space-y-1.5">
-                <li>
-                  <a href={`mailto:${p.email}`} className="break-all text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
-                    {p.email}
-                  </a>
+        <section className="mt-12" aria-labelledby="tjanster">
+          <h2 id="tjanster" className="text-heading text-ink">
+            Tjänster
+          </h2>
+          {p.services.length === 0 ? (
+            <p className="mt-3 text-muted">Inga tjänster upplagda än.</p>
+          ) : (
+            <ul className="mt-3 border-t border-line">
+              {p.services.map((s) => (
+                <li key={s.id} className="flex items-baseline justify-between gap-6 border-b border-line py-4">
+                  <span className="min-w-0 text-ink">
+                    {s.name}
+                    {s.durationMin && <span className="text-muted"> · {s.durationMin} min</span>}
+                  </span>
+                  <span className="shrink-0 text-ink tabular-nums">{formatPrice(s.priceSek)}</span>
                 </li>
-                {p.phone && (
-                  <li className="flex items-center gap-2">
-                    <Phone className="size-4 text-ink-muted" aria-hidden />
-                    <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className="text-ink underline decoration-line-strong underline-offset-4 hover:decoration-ink">
-                      {p.phone}
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </div>
-          </section>
-        </div>
+              ))}
+            </ul>
+          )}
+        </section>
 
-        {/* Bokningskort – sticky på desktop */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 rounded-card bg-surface p-6 shadow-lift ring-1 ring-line/60">
-            {price !== null && (
-              <p className="text-ink-muted">
-                från{" "}
-                <span className="font-display text-[1.75rem] font-extrabold tracking-[-0.02em] text-ink">
-                  {formatPrice(price)}
-                </span>
-              </p>
+        {videoUrl && <Video url={videoUrl} name={p.name} />}
+
+        <section className="mt-12" aria-labelledby="info">
+          <h2 id="info" className="text-heading text-ink">
+            Öppettider och kontakt
+          </h2>
+          <dl className="mt-3 border-t border-line">
+            <InfoRow label="Öppettider">{p.openingHours ?? "Ej angivet"}</InfoRow>
+            <InfoRow label="E-post">
+              <a href={`mailto:${p.email}`} className="break-all text-accent hover:text-accent-hover hover:underline">
+                {p.email}
+              </a>
+            </InfoRow>
+            {p.phone && (
+              <InfoRow label="Telefon">
+                <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className="text-accent hover:text-accent-hover hover:underline">
+                  {p.phone}
+                </a>
+              </InfoRow>
             )}
-            <p className="text-meta mt-1">
-              {p.services.length} {p.services.length === 1 ? "tjänst" : "tjänster"} · {p.area}
-            </p>
-            {booking ? (
-              <>
-                <BookingButton
-                  slug={p.slug}
-                  href={booking.href}
-                  external={booking.external}
-                  label={`Boka hos ${p.name}`}
-                  className="mt-5 w-full"
-                />
-                <p className="text-meta mt-3 text-center">{disclaimer}</p>
-              </>
-            ) : (
-              <p className="text-meta mt-5">Bokningslänken saknas just nu. Kontakta utövaren direkt.</p>
-            )}
-          </div>
-        </aside>
+          </dl>
+        </section>
       </div>
 
-      {/* Sticky bokningsfält längst ner på mobil */}
+      {/* Bokning: ruta till höger på desktop */}
+      <aside className="hidden lg:block">
+        <div className="sticky top-8 rounded-media border border-line p-6">
+          {price !== null && <p className="text-heading text-ink">från {formatPrice(price)}</p>}
+          {booking ? (
+            <>
+              <BookingButton
+                slug={p.slug}
+                href={booking.href}
+                external={booking.external}
+                label="Boka tid"
+                className="mt-4 w-full"
+              />
+              <p className="text-small mt-3 text-muted">{note}</p>
+            </>
+          ) : (
+            <p className="text-small mt-3 text-muted">Bokningslänk saknas. Kontakta utövaren direkt.</p>
+          )}
+        </div>
+      </aside>
+
+      {/* Bokning: fast rad längst ner på mobil */}
       {booking && (
-        <div className="sticky bottom-0 z-40 -mx-5 mt-12 border-t border-line bg-canvas/90 px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:-mx-8 sm:px-8 lg:hidden">
-          <div className="flex items-center gap-4">
-            <div className="min-w-0 shrink-0">
-              {price !== null && (
-                <p className="text-sm text-ink-muted">
-                  från <span className="font-display text-lg font-extrabold text-ink">{formatPrice(price)}</span>
-                </p>
-              )}
-              <p className="text-xs text-ink-muted">Bokas hos utövaren</p>
-            </div>
-            <BookingButton
-              slug={p.slug}
-              href={booking.href}
-              external={booking.external}
-              label="Boka tid"
-              className="h-12 flex-1"
-            />
+        <div className="sticky bottom-0 z-40 -mx-5 mt-12 border-t border-line bg-canvas px-5 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-8 sm:px-8 lg:hidden">
+          <div className="flex items-center justify-between gap-4">
+            {price !== null && <p className="text-ink">från {formatPrice(price)}</p>}
+            <BookingButton slug={p.slug} href={booking.href} external={booking.external} label="Boka tid" className="min-w-40" />
           </div>
-          <p className="sr-only">{disclaimer}</p>
+          <p className="sr-only">{note}</p>
         </div>
       )}
     </article>
   );
 }
 
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[7rem_minmax(0,1fr)] gap-4 border-b border-line py-4 sm:grid-cols-[9rem_minmax(0,1fr)]">
+      <dt className="text-muted">{label}</dt>
+      <dd className="whitespace-pre-line text-ink">{children}</dd>
+    </div>
+  );
+}
+
+// Visas bara när det finns riktiga bilder.
 function Gallery({ practitioner: p }: { practitioner: Practitioner }) {
+  if (p.images.length === 0) return null;
   const [first, ...rest] = p.images;
   return (
     <div>
-      <div
-        className={`relative overflow-hidden rounded-card shadow-card ${
-          first ? "aspect-[4/3] sm:aspect-[16/9] lg:aspect-[21/9]" : "aspect-[16/10] sm:aspect-auto sm:h-72 lg:h-80"
-        }`}
-      >
-        <PractitionerCover category={p.category} imagePath={first?.path} alt={p.name} size="lg" />
-        {p.isTestData && <TestDataBadge className="absolute top-4 right-4" />}
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element -- uppladdade bilder optimeras senare */}
+      <img src={first.path} alt={p.name} className="aspect-[16/10] w-full rounded-media object-cover" />
       {rest.length > 0 && (
-        <div className="mt-3 grid grid-cols-4 gap-3">
+        <div className="mt-2 grid grid-cols-4 gap-2">
           {rest.slice(0, 4).map((img, i) => (
-            // eslint-disable-next-line @next/next/no-img-element -- uppladdade bilder optimeras senare
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               key={img.id}
               src={img.path}
@@ -247,37 +192,26 @@ function Gallery({ practitioner: p }: { practitioner: Practitioner }) {
   );
 }
 
-function Video({ url, name }: { url: string | null; name: string }) {
-  const embed = url ? toVideoEmbedUrl(url) : null;
+function Video({ url, name }: { url: string; name: string }) {
+  const embed = toVideoEmbedUrl(url);
   return (
-    <section className="mt-12">
-      <h2 className="text-heading text-ink">Video</h2>
+    <section className="mt-12" aria-labelledby="video">
+      <h2 id="video" className="text-heading text-ink">
+        Video
+      </h2>
       {embed ? (
         <iframe
           src={embed}
           title={`Video från ${name}`}
-          className="mt-4 aspect-video w-full rounded-card shadow-card"
+          className="mt-3 aspect-video w-full rounded-media"
           allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           loading="lazy"
         />
-      ) : url ? (
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 inline-flex items-center gap-2 font-semibold text-accent hover:text-accent-hover"
-        >
-          <PlayCircle className="size-5" aria-hidden /> Se video från {name}
-        </a>
       ) : (
-        <div className="mt-4 flex items-center gap-4 rounded-card border border-dashed border-line-strong px-6 py-6 text-ink-muted">
-          <PlayCircle className="size-9 shrink-0" strokeWidth={1.5} aria-hidden />
-          <div>
-            <p className="font-medium text-ink">Video kommer snart</p>
-            <p className="text-meta">Här visar {name} upp sin verksamhet.</p>
-          </div>
-        </div>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-accent hover:underline">
+          Se video från {name}
+        </a>
       )}
     </section>
   );
@@ -286,12 +220,9 @@ function Video({ url, name }: { url: string | null; name: string }) {
 function ProfileSkeleton() {
   return (
     <div className="mt-4" aria-busy="true" aria-label="Hämtar profil">
-      <div className="aspect-[16/10] animate-pulse rounded-card bg-sunken sm:aspect-auto sm:h-72 lg:h-80" />
-      <div className="mt-8 space-y-3">
-        <div className="h-6 w-28 animate-pulse rounded-full bg-sunken" />
-        <div className="h-10 w-2/3 animate-pulse rounded-full bg-sunken" />
-        <div className="h-4 w-1/3 animate-pulse rounded-full bg-sunken" />
-      </div>
+      <div className="h-9 w-2/3 animate-pulse rounded bg-subtle" />
+      <div className="mt-3 h-4 w-1/3 animate-pulse rounded bg-subtle" />
+      <div className="mt-8 h-24 max-w-prose animate-pulse rounded bg-subtle" />
     </div>
   );
 }

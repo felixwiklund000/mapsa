@@ -10,7 +10,6 @@ export type MapPoint = {
   name: string;
   area: string;
   categoryName: string;
-  color: string;
   priceFrom: string | null;
   lat: number;
   lng: number;
@@ -76,11 +75,10 @@ export function PractitionerMap({ points }: { points: MapPoint[] }) {
         alt: p.name,
         icon: L.divIcon({
           className: "",
-          // Färgen kommer från vår egen kategorilista, aldrig från användardata.
-          html: `<span class="mapsa-pin" style="--pin:${p.color}"></span>`,
-          iconSize: [26, 26],
-          iconAnchor: [13, 13],
-          popupAnchor: [0, -14],
+          html: `<span class="mapsa-pin"></span>`,
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+          popupAnchor: [0, -10],
         }),
       })
         .bindPopup(() => popupContent(p), { closeButton: false })
@@ -109,7 +107,6 @@ export function PractitionerMap({ points }: { points: MapPoint[] }) {
 // som utövare skrivit själva aldrig tolkas som HTML.
 function popupContent(p: MapPoint): HTMLElement {
   const root = document.createElement("div");
-  root.className = "mapsa-popup";
   const link = document.createElement("a");
   link.href = `/utovare/${encodeURIComponent(p.slug)}`;
   link.textContent = p.name;
@@ -118,11 +115,6 @@ function popupContent(p: MapPoint): HTMLElement {
   meta.className = "mapsa-popup-meta";
   meta.textContent = `${p.categoryName} · ${p.area}`;
   root.append(link, meta);
-  if (p.priceFrom) {
-    const price = document.createElement("div");
-    price.className = "mapsa-popup-price";
-    price.textContent = `från ${p.priceFrom}`;
-    root.append(price);
-  }
+  if (p.priceFrom) meta.textContent += ` · från ${p.priceFrom}`;
   return root;
 }
