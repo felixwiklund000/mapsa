@@ -48,6 +48,10 @@ FROM practitioners p,
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = ${lit(p.slug)};`);
     }
+
+    // Foto: public/testdata/<slug>.jpg (se docs/testdata-bilder.md).
+    statements.push(`INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, ${lit(`/testdata/${p.slug}.jpg`)}, 0 FROM practitioners WHERE slug = ${lit(p.slug)};`);
   }
 
   return `-- Mapsa: skapar tabellerna (om de saknas) och lägger in påhittade testprofiler.

@@ -1,158 +1,138 @@
 /*
- * MAPSA DESIGNSYSTEM
- * ==================
- * Filosofi (inspirerad av Ubers app): så enkelt det går.
- *
- * - Svart, vitt och grått. Ingen accentfärg. Färg bara när den betyder
- *   något: kategorins lilla prick.
- * - Ett typsnitt (Archivo, en grotesk). Fet och tight i rubriker.
- * - Primärknapp: svart. Sekundärknapp: ljusgrå. En huvudknapp per skärm.
- * - Inga skuggor, gradienter, glas eller mönster. Separera med luft och
- *   tunna grå linjer.
- *
- * Klasser: bg-canvas, bg-fill, bg-fill-hover, text-ink, text-muted,
- * border-line, text-display, text-title, text-heading, text-small,
- * btn-primary, btn-secondary.
+ * MAPSA DESIGNSYSTEM – se docs/design-spec.md
+ * Bara värdena härifrån får användas. Tailwinds egna färger, textstorlekar
+ * och skuggor är nollställda så att inga andra värden kan smyga in.
  */
 
-/* ---------- Färger (ljust läge) ---------- */
+/* ---------- Färger ---------- */
 :root {
   --canvas: #ffffff;
-  --fill: #f3f3f3; /* sekundärknappar, fält, filter, bildplatshållare */
-  --fill-hover: #e8e8e8;
-  --line: #e9e9e9;
-
   --ink: #000000;
-  --ink-hover: #282828;
-  --muted: #5e5e5e;
-  --faint: #9e9e9e;
-
-  --on-ink: #ffffff;
-
+  --fill: #f3f3f3;
+  --line: #e8e8e8;
+  --muted: #6b6b6b;
   color-scheme: light;
 }
 
-/* ---------- Mörkt läge (följer systemet) ---------- */
 @media (prefers-color-scheme: dark) {
   :root {
     --canvas: #000000;
-    --fill: #1f1f1f;
-    --fill-hover: #2b2b2b;
-    --line: #262626;
-
     --ink: #ffffff;
-    --ink-hover: #e2e2e2;
-    --muted: #a6a6a6;
-    --faint: #6b6b6b;
-
-    --on-ink: #000000;
-
+    --fill: #1c1c1c;
+    --line: #2a2a2a;
+    --muted: #949494; /* inverterad #6b6b6b */
     color-scheme: dark;
   }
 }
 
-/* ---------- Tailwind-tokens ---------- */
+/* ---------- Nollställ Tailwinds standardskalor ---------- */
+@theme {
+  --color-*: initial;
+  --text-*: initial;
+  --shadow-*: initial;
+}
+
+/* ---------- Tokens ---------- */
 @theme inline {
   --color-canvas: var(--canvas);
-  --color-fill: var(--fill);
-  --color-fill-hover: var(--fill-hover);
-  --color-line: var(--line);
   --color-ink: var(--ink);
-  --color-ink-hover: var(--ink-hover);
+  --color-fill: var(--fill);
+  --color-line: var(--line);
   --color-muted: var(--muted);
-  --color-faint: var(--faint);
-  --color-on-ink: var(--on-ink);
 
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
-  --radius-control: 8px; /* knappar, fält, bilder i listor */
-  --radius-media: 12px; /* större bilder, karta */
+  /* 32 / 24 / 18 / 16 / 14 / 12 – inga andra */
+  --text-xs: 12px;
+  --text-xs--line-height: 1.5;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+  --text-base: 16px;
+  --text-base--line-height: 1.5;
+  --text-lg: 18px;
+  --text-lg--line-height: 1.2;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 1.2;
+  --text-2xl--letter-spacing: -0.01em;
+  --text-4xl: 32px;
+  --text-4xl--line-height: 1.2;
+  --text-4xl--letter-spacing: -0.01em;
+
+  /* En enda mjuk skugga – bara flytande sökfält och bottenark */
+  --shadow-float: 0 4px 16px rgb(0 0 0 / 0.12);
+  --shadow-sheet: 0 -4px 16px rgb(0 0 0 / 0.12);
 }
 
-/* ---------- Typografi ---------- */
-/* Stor sidrubrik */
-@utility text-display {
-  font-weight: 800;
-  font-size: 2rem;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-  @media (min-width: 1024px) {
-    font-size: 2.5rem;
+/* ---------- Rörelse: 200 ms ease-out, tryck = scale(0.98) ---------- */
+@utility pressable {
+  transition-property: transform, background-color, color, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+  &:active {
+    transform: scale(0.98);
   }
-}
-/* Rubrik i ark/panel */
-@utility text-title {
-  font-weight: 800;
-  font-size: 1.5rem;
-  line-height: 1.1;
-  letter-spacing: -0.035em;
-}
-/* Sektionsrubrik */
-@utility text-heading {
-  font-weight: 700;
-  font-size: 1.25rem;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-}
-@utility text-small {
-  font-size: 0.875rem;
-  line-height: 1.4;
 }
 
 /* ---------- Knappar ---------- */
+/* Primär: svart, 56 px, 8 px radie, 18/600 */
 @utility btn-primary {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
-  min-height: 3.25rem;
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--radius-control);
+  gap: 8px;
+  height: 56px;
+  padding: 0 16px;
+  border-radius: 8px;
   background: var(--ink);
-  color: var(--on-ink);
-  font-weight: 600;
-  font-size: 1.0625rem;
+  color: var(--canvas);
+  font-size: 18px;
   line-height: 1.2;
-  text-align: center;
-  transition: background-color 120ms ease;
+  font-weight: 600;
+  transition-property: transform, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
   &:hover {
-    background: var(--ink-hover);
+    opacity: 0.85;
   }
   &:active {
-    transform: scale(0.99);
+    transform: scale(0.98);
   }
 }
+/* Sekundär: ljusgrå, 44 px, 16/600 */
 @utility btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
-  min-height: 2.75rem;
-  padding: 0.5rem 1rem;
-  border-radius: var(--radius-control);
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
   background: var(--fill);
   color: var(--ink);
+  font-size: 16px;
+  line-height: 1.2;
   font-weight: 600;
-  transition: background-color 120ms ease;
+  transition-property: transform, background-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
   &:hover {
-    background: var(--fill-hover);
+    background: var(--line);
   }
   &:active {
-    transform: scale(0.99);
+    transform: scale(0.98);
   }
 }
 
 /* ---------- Layout ---------- */
+/* Sidmarginal 16 px på mobil, 32 px på större skärmar */
 @utility page-container {
   width: 100%;
-  max-width: 1240px;
+  max-width: 1200px;
   margin-inline: auto;
-  /* max(...) håller innehållet fritt från notchen när telefonen ligger ner */
-  padding-left: max(1rem, env(safe-area-inset-left));
-  padding-right: max(1rem, env(safe-area-inset-right));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
   @media (min-width: 640px) {
-    padding-left: max(2rem, env(safe-area-inset-left));
-    padding-right: max(2rem, env(safe-area-inset-right));
+    padding-left: max(32px, env(safe-area-inset-left));
+    padding-right: max(32px, env(safe-area-inset-right));
   }
 }
 
@@ -173,8 +153,9 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 1rem;
+  font-size: 16px;
   line-height: 1.5;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -184,6 +165,17 @@ body {
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ---------- Leaflet ----------
    Dubblerade klassnamn ger högre specificitet än leaflet.css, som laddas
    efter den här filen. */
@@ -191,76 +183,64 @@ body {
   font-family: var(--font-sans);
   background: var(--fill);
 }
-.leaflet-popup-content-wrapper.leaflet-popup-content-wrapper {
-  border-radius: var(--radius-control);
-  box-shadow: none;
-  border: 1px solid var(--line);
-  background: var(--canvas);
-  color: var(--ink);
-}
-.leaflet-popup-tip-container.leaflet-popup-tip-container {
-  display: none;
-}
-.leaflet-popup-content.leaflet-popup-content {
-  margin: 10px 14px;
-  font-size: 0.875rem;
-  line-height: 1.4;
-}
 .leaflet-bar.leaflet-bar {
-  border: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   box-shadow: none;
-  border-radius: var(--radius-control);
   overflow: hidden;
 }
 .leaflet-bar.leaflet-bar a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
   background: var(--canvas);
   color: var(--ink);
   border-color: var(--line);
 }
-.leaflet-touch .leaflet-bar.leaflet-bar a {
-  width: 44px;
-  height: 44px;
-  line-height: 44px;
-}
 .leaflet-control-attribution.leaflet-control-attribution {
-  font-size: 10px;
-  background: color-mix(in srgb, var(--canvas) 85%, transparent);
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--canvas);
   color: var(--muted);
 }
 .leaflet-control-attribution.leaflet-control-attribution a {
   color: var(--muted);
 }
 
-/* Kartnål: svart prick. Vald nål (klickad eller pekad på i listan) blir större.
-   Ytan runt pricken (28px) gör den lätt att träffa. */
-.mapsa-marker {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+/* Nål: svart pilla med pris (vit 12/600), höjd 24. Vald: vit med svart text, lite större. */
 .mapsa-pin {
-  display: block;
-  width: 14px;
-  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
   border-radius: 9999px;
+  border: 1px solid var(--ink);
   background: var(--ink);
+  color: var(--canvas);
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  transition:
+    transform 200ms ease-out,
+    background-color 200ms ease-out,
+    color 200ms ease-out;
+}
+/* Krockar prislappen med en annan visas en liten prick i stället. */
+.mapsa-pin.is-dot {
+  width: 12px;
+  height: 12px;
+  padding: 0;
   border: 2px solid var(--canvas);
-  transition: transform 120ms ease;
+  font-size: 0;
 }
-.mapsa-marker.is-active .mapsa-pin,
-.mapsa-marker:hover .mapsa-pin,
-.mapsa-marker:focus-visible .mapsa-pin {
-  transform: scale(1.6);
+.mapsa-marker:hover .mapsa-pin {
+  transform: translate(-50%, -50%) scale(1.1);
 }
-.mapsa-popup-title {
-  display: block;
-  font-weight: 700;
-  color: var(--ink) !important;
-  text-decoration: none;
-}
-.mapsa-popup-title:hover {
-  text-decoration: underline;
-}
-.mapsa-popup-meta {
-  color: var(--muted);
+.mapsa-marker.is-active .mapsa-pin {
+  background: var(--canvas);
+  color: var(--ink);
+  transform: translate(-50%, -50%) scale(1.15);
 }

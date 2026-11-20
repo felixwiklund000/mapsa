@@ -82,6 +82,9 @@ FROM practitioners p,
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'lugna-handen-massage';
 
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/lugna-handen-massage.jpg', 0 FROM practitioners WHERE slug = 'lugna-handen-massage';
+
 INSERT INTO practitioners
   (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
    email, campaign, level, status, registered_at, consent_at, is_test_data)
@@ -101,6 +104,9 @@ FROM practitioners p,
   ('Klippkort 10 pass', 5500, NULL, 2)
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'kraftverket-pt';
+
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/kraftverket-pt.jpg', 0 FROM practitioners WHERE slug = 'kraftverket-pt';
 
 INSERT INTO practitioners
   (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
@@ -123,6 +129,9 @@ FROM practitioners p,
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'saxen-och-spegeln';
 
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/saxen-och-spegeln.jpg', 0 FROM practitioners WHERE slug = 'saxen-och-spegeln';
+
 INSERT INTO practitioners
   (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
    email, campaign, level, status, registered_at, consent_at, is_test_data)
@@ -142,6 +151,9 @@ FROM practitioners p,
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'ryggraden-kiropraktik';
 
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/ryggraden-kiropraktik.jpg', 0 FROM practitioners WHERE slug = 'ryggraden-kiropraktik';
+
 INSERT INTO practitioners
   (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
    email, campaign, level, status, registered_at, consent_at, is_test_data)
@@ -160,6 +172,9 @@ FROM practitioners p,
   ('Återbesök', 650, 45, 1)
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'rorelsekliniken-naprapat';
+
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/rorelsekliniken-naprapat.jpg', 0 FROM practitioners WHERE slug = 'rorelsekliniken-naprapat';
 
 INSERT INTO practitioners
   (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
@@ -181,6 +196,9 @@ FROM practitioners p,
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'hudateljen-glod';
 
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/hudateljen-glod.jpg', 0 FROM practitioners WHERE slug = 'hudateljen-glod';
+
 INSERT INTO practitioners
   (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
    email, campaign, level, status, registered_at, consent_at, is_test_data)
@@ -200,6 +218,9 @@ FROM practitioners p,
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'jamjo-sportmassage';
 
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/jamjo-sportmassage.jpg', 0 FROM practitioners WHERE slug = 'jamjo-sportmassage';
+
 INSERT INTO practitioners
   (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
    email, campaign, level, status, registered_at, consent_at, is_test_data)
@@ -218,5 +239,8 @@ FROM practitioners p,
   ('Skäggtrimning', 195, 15, 1)
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'gullberna-frisyr';
+
+INSERT INTO images (practitioner_id, path, sort_order)
+SELECT id, '/testdata/gullberna-frisyr.jpg', 0 FROM practitioners WHERE slug = 'gullberna-frisyr';
 
 COMMIT;

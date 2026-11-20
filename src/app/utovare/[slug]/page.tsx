@@ -4,11 +4,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { ArrowLeft, Clock, Mail, MapPin, Phone, Tag } from "lucide-react";
-import { CategoryDot } from "@/components/category-dot";
-import { PractitionerMap } from "@/components/practitioner-map";
-import { formatPrice, lowestPrice } from "@/components/practitioner-row";
+import { Photo } from "@/components/photo";
+import { formatPrice } from "@/components/practitioner-row";
+import { SiteHeader } from "@/components/site-header";
 import { getCategory } from "@/lib/categories";
-import { getPublishedPractitionerBySlug, type Practitioner } from "@/lib/db/practitioners";
+import { getPublishedPractitionerBySlug } from "@/lib/db/practitioners";
 import { isExternalUrl, isValidBookingUrl, toVideoEmbedUrl } from "@/lib/urls";
 import { BookingButton } from "./booking-button";
 
@@ -29,6 +29,8 @@ export async function generateMetadata(props: PageProps<"/utovare/[slug]">): Pro
 export default function PractitionerPage(props: PageProps<"/utovare/[slug]">) {
   return (
     <main className="flex-1">
+      {/* Mobil: ingen header – bilden går ända upp. Desktop: header med logga. */}
+      <SiteHeader className="hidden lg:block" />
       <Suspense fallback={<ProfileSkeleton />}>
         <Profile params={props.params} />
       </Suspense>
@@ -43,7 +45,6 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
   if (!p) notFound();
 
   const category = getCategory(p.category);
-  const price = lowestPrice(p);
   const booking = isValidBookingUrl(p.bookingUrl)
     ? { href: p.bookingUrl, external: isExternalUrl(p.bookingUrl) }
     : null;
@@ -51,25 +52,36 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
   const videoUrl = p.level === "vip" ? p.videoUrl : null;
 
   return (
-    <article>
-      <div className="lg:page-container lg:pt-6">
-        <Cover practitioner={p} />
-      </div>
+    <article className="lg:page-container lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-16 lg:pt-8">
+      <div className="min-w-0">
+        {/* Bild överst: 4:3 kant i kant på mobil, 16:9 med 8 px radie på desktop */}
+        <div className="relative">
+          <Photo
+            src={p.images[0]?.path}
+            alt={p.name}
+            eager
+            className="aspect-[4/3] w-full lg:aspect-video lg:rounded-lg"
+          />
+          <Link
+            href="/"
+            aria-label="Alla utövare"
+            className="pressable absolute top-[max(12px,env(safe-area-inset-top))] left-3 flex size-11 items-center justify-center lg:top-2 lg:left-2"
+          >
+            <span className="flex size-10 items-center justify-center rounded-full bg-canvas text-ink">
+              <ArrowLeft className="size-5" strokeWidth={2} aria-hidden />
+            </span>
+          </Link>
+        </div>
 
-      <div className="page-container pt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16 lg:pt-10">
-        <div className="min-w-0">
-          <header>
-            <h1 className="text-display">{p.name}</h1>
-            <p className="mt-2 flex items-center gap-2 text-muted">
-              <CategoryDot slug={p.category} />
-              {category?.name} · {p.area}
-            </p>
-            {p.isTestData && <p className="text-small mt-1 text-faint">Testdata – påhittad exempelprofil.</p>}
-          </header>
+        <div className="px-4 pt-6 lg:px-0 lg:pt-8">
+          <h1 className="text-2xl font-bold lg:text-4xl">{p.name}</h1>
+          <p className="mt-1 text-muted">
+            {category?.name} · {p.area}
+          </p>
 
-          {p.description && <p className="mt-5 max-w-prose text-[1.0625rem] whitespace-pre-line">{p.description}</p>}
+          {p.description && <p className="mt-4 max-w-[65ch] whitespace-pre-line">{p.description}</p>}
 
-          <ul className="mt-8 border-t border-line">
+          <ul className="mt-6">
             <InfoRow icon={<MapPin className="size-5" aria-hidden />} label="Adress">
               {p.address ? `${p.address}, ` : ""}
               {p.area}, Karlskrona
@@ -81,13 +93,13 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
             )}
             {p.phone && (
               <InfoRow icon={<Phone className="size-5" aria-hidden />} label="Telefon">
-                <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className="underline-offset-2 hover:underline">
+                <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className="underline-offset-4 hover:underline">
                   {p.phone}
                 </a>
               </InfoRow>
             )}
             <InfoRow icon={<Mail className="size-5" aria-hidden />} label="E-post">
-              <a href={`mailto:${p.email}`} className="break-all underline-offset-2 hover:underline">
+              <a href={`mailto:${p.email}`} className="underline-offset-4 hover:underline">
                 {p.email}
               </a>
             </InfoRow>
@@ -98,60 +110,68 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
             )}
           </ul>
 
-          <section className="mt-10" aria-labelledby="tjanster">
-            <h2 id="tjanster" className="text-heading">
+          <section className="mt-8" aria-labelledby="tjanster">
+            <h2 id="tjanster" className="text-lg font-semibold">
               Tjänster
             </h2>
             {p.services.length === 0 ? (
-              <p className="mt-3 text-muted">Inga tjänster upplagda än.</p>
+              <p className="mt-2 text-muted">Inga tjänster upplagda än.</p>
             ) : (
               <ul className="mt-2">
                 {p.services.map((s) => (
-                  <li key={s.id} className="flex items-center justify-between gap-6 border-b border-line py-4 last:border-b-0">
+                  <li key={s.id} className="flex min-h-16 items-center justify-between gap-4 py-2">
                     <div className="min-w-0">
                       <p className="font-semibold">{s.name}</p>
-                      {s.durationMin && <p className="text-small text-muted">{s.durationMin} min</p>}
+                      {s.durationMin && <p className="text-sm text-muted">{s.durationMin} min</p>}
                     </div>
-                    <p className="shrink-0 font-bold tabular-nums">{formatPrice(s.priceSek)}</p>
+                    <p className="shrink-0 font-semibold">{formatPrice(s.priceSek)}</p>
                   </li>
                 ))}
               </ul>
             )}
           </section>
 
-          {videoUrl && <Video url={videoUrl} name={p.name} />}
-        </div>
-
-        {/* Bokning, desktop: panel till höger */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-8 rounded-media border border-line p-6">
-            {price !== null && (
-              <p className="text-heading">
-                <span className="text-base font-normal text-muted">från </span>
-                {formatPrice(price)}
-              </p>
-            )}
-            {booking ? (
-              <>
-                <BookingButton
-                  slug={p.slug}
-                  href={booking.href}
-                  external={booking.external}
-                  label="Boka"
-                  className="mt-4 w-full"
+          {videoUrl && (
+            <section className="mt-8" aria-labelledby="video">
+              <h2 id="video" className="text-lg font-semibold">
+                Video
+              </h2>
+              {toVideoEmbedUrl(videoUrl) ? (
+                <iframe
+                  src={toVideoEmbedUrl(videoUrl)!}
+                  title={`Video från ${p.name}`}
+                  className="mt-4 aspect-video w-full rounded-lg"
+                  allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
                 />
-                <p className="text-small mt-3 text-muted">{note}</p>
-              </>
-            ) : (
-              <p className="text-small mt-3 text-muted">Bokningslänk saknas. Kontakta utövaren direkt.</p>
-            )}
-          </div>
-        </aside>
+              ) : (
+                <a href={videoUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block underline">
+                  Se video från {p.name}
+                </a>
+              )}
+            </section>
+          )}
+        </div>
       </div>
 
-      {/* Bokning, mobil: fast längst ner */}
+      {/* Boka, desktop: kolumn till höger, ingen ruta */}
+      <aside className="hidden lg:block">
+        <div className="sticky top-8">
+          {booking ? (
+            <>
+              <BookingButton slug={p.slug} href={booking.href} external={booking.external} label="Boka" className="w-full" />
+              <p className="mt-4 text-sm text-muted">{note}</p>
+            </>
+          ) : (
+            <p className="text-sm text-muted">Bokningslänk saknas. Kontakta utövaren direkt.</p>
+          )}
+        </div>
+      </aside>
+
+      {/* Boka, mobil: fast längst ner */}
       {booking && (
-        <div className="sticky bottom-0 z-[1001] mt-10 border-t border-line bg-canvas px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+        <div className="sticky bottom-0 z-40 mt-8 border-t border-line bg-canvas px-4 pt-4 pb-[max(16px,env(safe-area-inset-bottom))] lg:hidden">
           <BookingButton slug={p.slug} href={booking.href} external={booking.external} label="Boka" className="w-full" />
           <p className="mt-2 text-center text-xs text-muted">Du går vidare till utövarens egen bokning.</p>
         </div>
@@ -160,78 +180,25 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
   );
 }
 
-// Stor bild överst. Saknas foto visas platsen på en karta i stället.
-function Cover({ practitioner: p }: { practitioner: Practitioner }) {
-  const first = p.images[0];
-  return (
-    <div className="relative isolate h-60 overflow-hidden bg-fill sm:h-80 lg:h-96 lg:rounded-media">
-      {first ? (
-        // eslint-disable-next-line @next/next/no-img-element -- uppladdade bilder optimeras senare
-        <img src={first.path} alt={p.name} className="h-full w-full object-cover" />
-      ) : (
-        <PractitionerMap
-          variant="location"
-          label={`Karta: ${p.name} i ${p.area}`}
-          points={[{ slug: p.slug, name: p.name, area: p.area, categoryName: "", priceFrom: null, lat: p.lat, lng: p.lng }]}
-        />
-      )}
-      <Link
-        href="/"
-        aria-label="Alla utövare"
-        className="absolute top-3 left-3 z-[1000] flex size-11 items-center justify-center rounded-full bg-canvas text-ink transition-colors hover:bg-fill lg:top-4 lg:left-4"
-      >
-        <ArrowLeft className="size-5" strokeWidth={2.25} aria-hidden />
-      </Link>
-    </div>
-  );
-}
-
 function InfoRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <li className="flex gap-4 border-b border-line py-4">
-      <span className="mt-0.5 shrink-0">{icon}</span>
-      <div className="min-w-0">
-        <p className="sr-only">{label}</p>
-        <div className="whitespace-pre-line">{children}</div>
+    <li className="flex min-h-14 items-center gap-4 py-2">
+      <span className="shrink-0">{icon}</span>
+      <div className="min-w-0 break-words">
+        <span className="sr-only">{label}: </span>
+        {children}
       </div>
     </li>
   );
 }
 
-function Video({ url, name }: { url: string; name: string }) {
-  const embed = toVideoEmbedUrl(url);
-  return (
-    <section className="mt-10" aria-labelledby="video">
-      <h2 id="video" className="text-heading">
-        Video
-      </h2>
-      {embed ? (
-        <iframe
-          src={embed}
-          title={`Video från ${name}`}
-          className="mt-3 aspect-video w-full rounded-media"
-          allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          loading="lazy"
-        />
-      ) : (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block underline">
-          Se video från {name}
-        </a>
-      )}
-    </section>
-  );
-}
-
 function ProfileSkeleton() {
   return (
-    <div aria-busy="true" aria-label="Hämtar profil">
-      <div className="lg:page-container lg:pt-6">
-        <div className="h-60 animate-pulse bg-fill sm:h-80 lg:h-96 lg:rounded-media" />
-      </div>
-      <div className="page-container pt-6">
-        <div className="h-9 w-2/3 animate-pulse rounded bg-fill" />
-        <div className="mt-3 h-4 w-1/3 animate-pulse rounded bg-fill" />
+    <div className="lg:page-container lg:pt-8" aria-busy="true" aria-label="Hämtar profil">
+      <div className="aspect-[4/3] animate-pulse bg-fill lg:aspect-video lg:max-w-[calc(100%-384px)] lg:rounded-lg" />
+      <div className="px-4 pt-6 lg:px-0">
+        <div className="h-8 w-2/3 animate-pulse rounded-lg bg-fill" />
+        <div className="mt-2 h-4 w-1/3 animate-pulse rounded-lg bg-fill" />
       </div>
     </div>
   );

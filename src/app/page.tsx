@@ -2,19 +2,19 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { CategoryFilter } from "@/components/category-filter";
-import { HomeShell } from "@/components/home-shell";
+import { HomeShell, type ShellItem } from "@/components/home-shell";
 import { formatPrice, lowestPrice, PractitionerRow } from "@/components/practitioner-row";
 import { SearchBar } from "@/components/search-bar";
-import { SiteFooter } from "@/components/site-footer";
 import { getCategory } from "@/lib/categories";
 import { listPublishedPractitioners, type Practitioner } from "@/lib/db/practitioners";
-import { filterPractitioners, hasActiveFilters, parseFilters, type Filters } from "@/lib/search";
+import { filterPractitioners, parseFilters, type Filters } from "@/lib/search";
 
-// Startsida: karta + lista. Se HomeShell för layouten.
+// Startsida: karta + lista. Layouten finns i HomeShell.
 
 export default function Home(props: PageProps<"/">) {
   return (
     <main className="flex-1">
+      <h1 className="sr-only">Massage, PT, frisör och mer i Karlskrona</h1>
       <Suspense fallback={<HomeFallback />}>
         <HomeContent searchParams={props.searchParams} />
       </Suspense>
@@ -27,50 +27,34 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["sea
   const filters = parseFilters(await searchParams);
   const all = await listPublishedPractitioners();
   const results = filterPractitioners(all, filters);
-  const testCount = results.filter((p) => p.isTestData).length;
-  const allTest = results.length > 0 && testCount === results.length;
 
   return (
     <HomeShell
       search={<SearchBar filters={filters} />}
-      header={<ListHeader filters={filters} count={results.length} allTest={allTest} />}
+      header={<ListHeader filters={filters} count={results.length} />}
       list={
         results.length === 0 ? (
           <EmptyState filters={filters} all={all} />
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="space-y-2">
             {results.map((p) => (
               <li key={p.id}>
-                <PractitionerRow practitioner={p} showTestLabel={testCount > 0 && !allTest} />
+                <PractitionerRow practitioner={p} />
               </li>
             ))}
           </ul>
         )
       }
-      footer={<SiteFooter inline />}
-      points={results.map(toMapPoint)}
+      footer={<Footer />}
+      items={results.map(toItem)}
     />
   );
 }
 
-function ListHeader({ filters, count, allTest }: { filters?: Filters; count?: number; allTest?: boolean }) {
+function ListHeader({ filters, count }: { filters?: Filters; count?: number }) {
   return (
     <>
-      <div className="mt-1 flex items-end justify-between gap-4 lg:mt-0">
-        <div>
-          <h1 className="text-title lg:text-display">Utövare i Karlskrona</h1>
-          <p className="text-small mt-1 text-muted">
-            {count === undefined ? " " : `${count} ${count === 1 ? "träff" : "träffar"}`}
-            {filters?.area && ` i ${filters.area}`}
-            {allTest && " · påhittade testprofiler"}
-          </p>
-        </div>
-        {filters && hasActiveFilters(filters) && (
-          <Link href="/" scroll={false} className="btn-secondary shrink-0 text-sm">
-            Rensa
-          </Link>
-        )}
-      </div>
+      <h2 className="mt-2 text-lg font-semibold lg:mt-0">{count === undefined ? " " : `${count} utövare`}</h2>
       <div className="mt-4">
         <CategoryFilter filters={filters} />
       </div>
@@ -78,16 +62,23 @@ function ListHeader({ filters, count, allTest }: { filters?: Filters; count?: nu
   );
 }
 
-function toMapPoint(p: Practitioner) {
+function Footer() {
+  return (
+    <p className="mt-8 border-t border-line py-6 text-sm text-muted">
+      Mapsa bokar inte åt dig. Vi länkar vidare till utövarens egen bokning. UF-företag i Karlskrona.
+    </p>
+  );
+}
+
+function toItem(p: Practitioner): ShellItem {
   const price = lowestPrice(p);
   return {
     slug: p.slug,
     name: p.name,
-    area: p.area,
-    categoryName: getCategory(p.category)?.name ?? "",
-    priceFrom: price === null ? null : formatPrice(price),
+    label: price === null ? "–" : formatPrice(price),
     lat: p.lat,
     lng: p.lng,
+    href: `/utovare/${p.slug}`,
   };
 }
 
@@ -100,47 +91,48 @@ function EmptyState({ filters, all }: { filters: Filters; all: Practitioner[] })
 
   if (emptyCategory) {
     return (
-      <div className="py-6">
-        <p className="text-heading">Inga utövare inom {emptyCategory.name.toLocaleLowerCase("sv-SE")} än</p>
+      <div className="py-4">
+        <p className="font-semibold">Inga utövare inom {emptyCategory.name.toLocaleLowerCase("sv-SE")} än</p>
         <p className="mt-1 text-muted">Är du utövare? Bli en av de första. Första månaden är gratis.</p>
-        <Link href="/bli-utovare" className="btn-secondary mt-5">
+        <Link href="/bli-utovare" className="btn-secondary mt-4">
           Lista din verksamhet
         </Link>
       </div>
     );
   }
   return (
-    <div className="py-6">
-      <p className="text-heading">Inga träffar</p>
+    <div className="py-4">
+      <p className="font-semibold">Inga träffar</p>
       <p className="mt-1 text-muted">Prova ett annat sökord, område eller en annan kategori.</p>
-      <Link href="/" scroll={false} className="btn-secondary mt-5">
+      <Link href="/" scroll={false} className="btn-secondary mt-4">
         Visa alla utövare
       </Link>
     </div>
   );
 }
 
-// Visas medan data hämtas: samma layout, utan innehåll.
+// Skelett medan listan laddar: samma layout, grå block i radernas form.
 function HomeFallback() {
   return (
     <HomeShell
       search={<SearchBar />}
       header={<ListHeader />}
       list={
-        <ul aria-busy="true" aria-label="Hämtar utövare">
-          {Array.from({ length: 4 }, (_, i) => (
-            <li key={i} className="flex items-center gap-4 py-3">
-              <div className="size-16 animate-pulse rounded-control bg-fill" />
+        <ul className="space-y-2" aria-busy="true" aria-label="Hämtar utövare">
+          {Array.from({ length: 5 }, (_, i) => (
+            <li key={i} className="flex h-20 items-center gap-4">
+              <div className="size-16 shrink-0 animate-pulse rounded-lg bg-fill" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-1/2 animate-pulse rounded bg-fill" />
-                <div className="h-3 w-1/3 animate-pulse rounded bg-fill" />
+                <div className="h-4 w-1/2 animate-pulse rounded-lg bg-fill" />
+                <div className="h-3 w-1/3 animate-pulse rounded-lg bg-fill" />
               </div>
+              <div className="h-4 w-16 animate-pulse rounded-lg bg-fill" />
             </li>
           ))}
         </ul>
       }
       footer={null}
-      points={[]}
+      items={[]}
     />
   );
 }

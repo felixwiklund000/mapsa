@@ -1,11 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo } from "next/font/google";
-import { SiteHeader } from "@/components/site-header";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const archivo = Archivo({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-archivo",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -25,7 +24,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   // Låter sidan gå ut till skärmkanten på telefoner med notch; marginaler
-  // för notch och hemknapp läggs på i header och bokningsfält.
+  // för notch och hemknapp läggs på där det behövs.
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
@@ -35,11 +34,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="sv" className={`${archivo.variable} h-full`}>
-      <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">{children}</div>
-      </body>
+    <html lang="sv" className={`${inter.variable} h-full`}>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }

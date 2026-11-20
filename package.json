@@ -9,11 +9,13 @@
     "lint": "eslint",
     "db:seed": "node --no-warnings scripts/seed.ts",
     "db:export-sql": "node --no-warnings scripts/export-seed-sql.ts",
-    "icons": "node --no-warnings scripts/generate-icons.ts"
+    "icons": "node --no-warnings scripts/generate-icons.ts",
+    "photos": "node --no-warnings scripts/prepare-photos.ts"
   },
   "dependencies": {
     "leaflet": "1.9.4",
     "lucide-react": "^1.73.0",
+    "motion": "^14.14.0",
     "next": "16.4.6",
     "postgres": "^4.1.1",
     "react": "19.3.0",
