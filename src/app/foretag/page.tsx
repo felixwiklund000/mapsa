@@ -1,141 +1,90 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarCheck, Check, ChevronDown, ChevronRight, Smartphone } from "lucide-react";
+import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { Logo } from "@/components/site-header";
 import { SiteMenu } from "@/components/site-menu";
 import { CityScene } from "@/components/landing/scenes";
-import { FeatureTabs } from "@/components/landing/feature-tabs";
-import { RadiatingLines } from "@/components/landing/radiating-lines";
+import { StickyCta } from "@/components/landing/sticky-cta";
 import { SignupSection } from "@/components/signup/signup-section";
 import { brandFonts } from "./fonts";
 
-// Landningssida för företag (utövare): vad Mapsa är, hur det funkar, priser.
-// Egen stil: sand + mörka paneler + orange accent, Instrument Serif i
-// rubriker, Geist Mono i små etiketter. Nivåer och priser enligt produktspecen.
-// Tonen: direkt, ärlig och vänlig – inga överord, inga påhittade siffror.
-
+// /foretag – berättelsen i tre akter (docs/hemsida-brief.md, avsnitt 5):
+//   Akt 1: kroken. Akt 2: kundens väg i tre scener. Akt 3: anmälan.
+//   Sedan förtroende: pris (en rad), frågor, sidfot.
+// En enda primär knapp på hela sidan: "Lägg upp ditt företag".
+// Texterna kommer från briefen – hitta inte på nytt innehåll här.
 
 export const metadata: Metadata = {
   title: "Mapsa för företag – syns på kartan i Blekinge",
   description:
-    "Mapsa visar din salong, klinik eller studio på kartan med dina priser. Kunden bokar via din egen bokning. Första månaden gratis.",
+    "Mapsa visar alla utövare i Blekinge på en karta, med priset, så kunden ser direkt vad det kostar och bokar hos dig. Gratis att komma igång.",
 };
 
-// Anmälan finns längre ner på sidan (#anmal).
-const SIGNUP_HREF: string | null = "#anmal";
+// Priset för att synas först i sin kategori bestäms av Mapsa UF.
+// Sätt ett tal här så visas raden "Vill du synas först …".
+const TOP_PRICE: number | null = null;
 
 const FLAME = "#ff5a1f";
-
-const BOOKING_TOOLS = ["Bokadirekt", "Fresha", "Egen hemsida", "Telefon", "Instagram"];
-
-const STATS = [
-  { value: "6", unit: "", label: "kategorier att synas i" },
-  { value: "5", unit: "", label: "kommuner i Blekinge" },
-  { value: "0", unit: "kr", label: "för kunden att använda" },
-  { value: "0", unit: "%", label: "provision på dina bokningar" },
-];
-
-const PLANS = [
-  {
-    name: "Grundlistning",
-    price: "0 kr",
-    period: "första månaden",
-    features: ["Profil med tjänster och priser", "Din lapp på kartan", "Länk till din bokning", "En bild"],
-  },
-  {
-    name: "Bas",
-    price: "99 kr",
-    period: "per månad",
-    features: ["Allt i Grundlistning", "Upp till 5 bilder", "Kampanjfält", "Längre beskrivning"],
-  },
-  {
-    name: "Mellan",
-    price: "249 kr",
-    period: "per månad",
-    badge: "Syns först",
-    features: ["Allt i Bas", "Topplacering i listan", "Klickstatistik", "Utvald-märke på profilen"],
-  },
-  {
-    name: "VIP",
-    price: "549 kr",
-    period: "per månad",
-    features: ["Allt i Mellan", "Video på profilen", "VIP-märke på profilen"],
-  },
-];
+const label = "font-mono text-xs tracking-[0.08em] uppercase";
 
 const FAQ = [
   {
     q: "Är Mapsa ett bokningssystem?",
-    a: "Nej. Vi länkar bara vidare till din befintliga bokning – Bokadirekt, Fresha, din hemsida, telefon eller Instagram. Du behåller allt du har i dag.",
+    a: "Nej. Vi länkar vidare till bokningen du redan har – Bokadirekt, Fresha, egen hemsida, telefon eller Instagram. Vi tar ingen provision.",
+  },
+  {
+    q: "Vad kostar det?",
+    a: TOP_PRICE
+      ? `Det är gratis att komma igång. Vill du synas först i din kategori kostar det ${TOP_PRICE} kr i månaden.`
+      : "Det är gratis att komma igång.",
+  },
+  {
+    q: "Hur tar jag bort min profil?",
+    a: "Hör av dig till oss, så tar vi bort profilen och dina uppgifter. Läs mer i integritetspolicyn.",
   },
   {
     q: "Vilka kan vara med?",
-    a: "Massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet/hud i Blekinge.",
-  },
-  {
-    q: "Hur hamnar jag på kartan?",
-    a: "Du skickar in dina uppgifter, vi granskar dem och lägger ut dig på kartan. Inget syns publikt innan det är godkänt.",
-  },
-  {
-    q: "Kan jag ändra eller ta bort min profil?",
-    a: "Ja, när som helst. Hör av dig så ändrar eller tar vi bort den. Dina uppgifter delas aldrig med tredje part.",
-  },
-  {
-    q: "Vilka står bakom Mapsa?",
-    a: "Två gymnasieelever som driver Mapsa som UF-företag i Blekinge.",
+    a: "Frisörer, massörer, PT:er, naprapater, kiropraktorer och skönhet/hud i Blekinge.",
   },
 ];
 
-const label = "font-mono text-xs tracking-[0.08em] uppercase";
-
-function FlameButton({ href, children }: { href: string; children: React.ReactNode }) {
+function PrimaryButton({ id }: { id?: string }) {
   return (
     <a
-      href={href}
-      className="pressable inline-flex h-12 items-center justify-center gap-1.5 rounded-full bg-flame pr-4 pl-6 text-base font-medium text-white shadow-[0_8px_24px_-8px_rgb(255_90_31/0.7)] hover:brightness-105"
+      id={id}
+      href="#anmal"
+      className="pressable inline-flex h-14 items-center justify-center gap-1.5 rounded-full bg-flame pr-5 pl-7 text-lg font-medium text-white shadow-[0_8px_24px_-8px_rgb(255_90_31/0.7)] hover:brightness-105"
     >
-      {children}
-      <ChevronRight size={18} strokeWidth={2.25} aria-hidden="true" />
+      Lägg upp ditt företag
+      <ChevronRight size={20} strokeWidth={2.25} aria-hidden="true" />
     </a>
   );
-}
-
-function SignupButton() {
-  if (!SIGNUP_HREF) {
-    return (
-      <span className="inline-flex h-12 cursor-default items-center rounded-full bg-panel/10 px-6 text-base font-medium text-stone">
-        Anmälan öppnar snart
-      </span>
-    );
-  }
-  return <FlameButton href={SIGNUP_HREF}>Lägg upp ditt företag</FlameButton>;
 }
 
 export default function ForetagPage() {
   return (
     <div className={`${brandFonts} min-h-dvh bg-sand text-panel`}>
-      {/* ---------- Header ---------- */}
+      {/* ---------- Toppbar ---------- */}
       <header className="sticky top-0 z-30 bg-sand/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="relative mx-auto flex h-16 max-w-[1440px] items-center gap-4 px-4 sm:px-8">
           <Logo />
           <nav aria-label="Sidan" className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
-            {[
-              ["#funktioner", "Funktioner"],
-              ["#sa-funkar-det", "Så funkar det"],
-              ["#priser", "Priser"],
-              ["#fragor", "Frågor"],
-            ].map(([href, text]) => (
-              <a key={href} href={href} className="rounded-full px-3 py-2 text-sm font-medium text-panel/80 transition-colors hover:text-panel">
-                {text}
-              </a>
-            ))}
+            <Link href="/" className="rounded-full px-3 py-2 text-sm font-medium text-panel/80 hover:text-panel">
+              Hitta utövare
+            </Link>
+            <a href="#sa-funkar-det" className="rounded-full px-3 py-2 text-sm font-medium text-panel/80 hover:text-panel">
+              Så funkar det
+            </a>
+            <a href="#fragor" className="rounded-full px-3 py-2 text-sm font-medium text-panel/80 hover:text-panel">
+              Frågor
+            </a>
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <a
               href="#anmal"
               className="pressable hidden h-11 items-center rounded-full bg-panel px-5 text-sm font-medium text-white sm:inline-flex"
             >
-              Kom igång
+              Lägg upp ditt företag
             </a>
             <SiteMenu current="/foretag" />
           </div>
@@ -143,7 +92,7 @@ export default function ForetagPage() {
       </header>
 
       <main>
-        {/* ---------- Hero: mörk panel ---------- */}
+        {/* ---------- Akt 1: kroken ---------- */}
         <section className="px-2 sm:px-3">
           <div
             className="relative overflow-hidden rounded-[28px] bg-panel text-[#f3ede2]"
@@ -153,141 +102,46 @@ export default function ForetagPage() {
             }}
           >
             <div className="landing-rise relative z-10 mx-auto flex max-w-3xl flex-col items-center px-5 pt-16 text-center sm:pt-24">
-              <p className={`${label} inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-white/70 ring-1 ring-white/15`}>
-                <span className="h-1.5 w-1.5 rounded-full bg-flame" aria-hidden="true" />
-                För utövare i Blekinge
-              </p>
-              <h1 className="mt-7 font-serif text-display text-balance">
-                Bli hittad av kunder <span className="text-white/40">i närheten.</span>
+              <h1 className="font-serif text-display text-balance">
+                Din nästa kund letar efter dig <span className="text-white/40">just nu.</span>
               </h1>
-              <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/60">
-                Mapsa visar din salong, klinik eller studio på kartan – med dina priser. Kunden klickar vidare till din
-                egen bokning.
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">
+                Mapsa visar alla utövare i Blekinge på en karta, med priset, så kunden ser direkt vad det kostar och bokar hos
+                dig.
               </p>
-              <div className="mt-9 flex items-center gap-5">
-                <FlameButton href="#anmal">Lägg upp ditt företag</FlameButton>
-                <Link href="/" className="text-base font-medium text-white/70 underline-offset-4 hover:text-white hover:underline">
-                  Se kartan
-                </Link>
+              <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:gap-5">
+                <PrimaryButton id="akt-1-knapp" />
+                <span className="text-base text-white/70">Gratis att komma igång</span>
               </div>
+              <p className={`${label} mt-6 text-white/45`}>Ett UF-företag från Karlskrona</p>
             </div>
-
-            {/* 3D-staden med kort som hänger i linjer från knappen */}
-            <div className="landing-rise relative mx-auto mt-4 h-[360px] max-w-[1100px] sm:h-[460px] lg:mt-0 lg:h-[600px]" style={{ animationDelay: "150ms" }}>
-              <svg
-                viewBox="0 0 1100 150"
-                preserveAspectRatio="none"
-                className="absolute inset-x-0 top-0 hidden h-[150px] w-full lg:block"
-                aria-hidden="true"
-              >
-                {[
-                  "M550 0 V44 Q550 64 530 64 H190 Q170 64 170 84 V150",
-                  "M550 0 V44 Q550 64 570 64 H910 Q930 64 930 84 V150",
-                ].map((d) => (
-                  <g key={d}>
-                    <path d={d} fill="none" stroke="white" strokeOpacity="0.2" vectorEffect="non-scaling-stroke" />
-                    <path d={d} fill="none" stroke={FLAME} strokeWidth="1.5" className="landing-flow" vectorEffect="non-scaling-stroke" />
-                  </g>
-                ))}
-                <circle cx="550" cy="2" r="3" fill="white" fillOpacity="0.5" />
-              </svg>
-
-              <div className="absolute inset-0 lg:top-10">
-                <CityScene accent={FLAME} />
-              </div>
-
-              <HeroProfileCard />
-              <HeroClicksCard />
+            <div className="landing-rise relative mx-auto h-[320px] max-w-[1100px] sm:h-[440px] lg:h-[520px]" style={{ animationDelay: "150ms" }}>
+              <CityScene accent={FLAME} />
             </div>
           </div>
         </section>
 
-        {/* ---------- Bokningsverktyg ---------- */}
-        <section aria-label="Bokning" className="mx-auto max-w-[1440px] px-4 py-14 sm:px-8 sm:py-16">
-          <p className={`${label} text-center text-stone`}>Boka-knappen går till det du redan använder</p>
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-4 sm:justify-between sm:px-6">
-            {BOOKING_TOOLS.map((t) => (
-              <li key={t} className="text-2xl font-semibold tracking-tight text-panel/75 sm:text-[28px]">
-                {t}
-              </li>
-            ))}
-          </ul>
+        {/* ---------- Akt 2: kundens väg, tre scener ---------- */}
+        <section id="sa-funkar-det" className="mx-auto max-w-[1440px] scroll-mt-20 px-4 pt-24 sm:px-8 sm:pt-32 lg:px-16">
+          <p className={`${label} text-stone`}>Så hittar kunden dig</p>
+          <ol className="mt-10 grid gap-4 lg:grid-cols-3">
+            <Scene n={1} text="Hon söker ”frisör” i Karlskrona.">
+              <SceneSearch />
+            </Scene>
+            <Scene n={2} text="Hon ser alla frisörer, med priserna.">
+              <SceneMap />
+            </Scene>
+            <Scene
+              n={3}
+              text="Hon bokar hos dig, i systemet du redan har."
+              sub="Bokadirekt, Fresha, egen hemsida, telefon eller Instagram. 0 % provision."
+            >
+              <SceneBook />
+            </Scene>
+          </ol>
         </section>
 
-        {/* ---------- Funktioner ---------- */}
-        <section id="funktioner" className="mx-auto max-w-[1440px] scroll-mt-20 px-4 pt-10 pb-24 sm:px-8 sm:pt-16 sm:pb-32 lg:px-16">
-          <div className="landing-reveal grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end">
-            <h2 className="font-serif text-headline text-balance">
-              Byggt för att du ska bli <span className="text-stone">vald, inte bara hittad.</span>
-            </h2>
-            <p className="max-w-md text-lg leading-relaxed text-stone lg:justify-self-end">
-              Från prislappen på kartan till klicket på din bokningsknapp – allt är gjort för att kunden ska välja dig.
-            </p>
-          </div>
-          <div className="mt-16 sm:mt-20">
-            <FeatureTabs />
-          </div>
-        </section>
-
-        {/* ---------- Så funkar det: flöde + siffror ---------- */}
-        <section id="sa-funkar-det" className="scroll-mt-16 px-2 sm:px-3">
-          <div className="overflow-hidden rounded-[28px] bg-panel px-5 py-20 text-[#f3ede2] sm:py-28">
-            <div className="landing-reveal mx-auto max-w-2xl text-center">
-              <p className={`${label} text-white/50`}>Så funkar det</p>
-              <h2 className="mt-5 font-serif text-headline text-balance">
-                Kunden hittar dig. <span className="text-white/40">Bokar hos dig.</span>
-              </h2>
-            </div>
-
-            <div className="landing-reveal mx-auto mt-16 max-w-4xl sm:mt-24">
-              <div className="flex items-center">
-                <FlowBox>
-                  <Smartphone size={30} strokeWidth={1.75} aria-hidden="true" />
-                </FlowBox>
-                <FlowLine />
-                <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-3xl bg-white shadow-[0_30px_80px_-20px_rgb(255_90_31/0.45)] sm:h-44 sm:w-44">
-                  <svg viewBox="0 0 22 26" className="h-12 w-12 sm:h-20 sm:w-20" aria-hidden="true">
-                    <path
-                      d="M11 1C5.48 1 1 5.33 1 10.68c0 3.86 2.7 7.6 8.08 13.1a2.7 2.7 0 0 0 3.84 0C18.3 18.28 21 14.54 21 10.68 21 5.33 16.52 1 11 1Z"
-                      fill="#141312"
-                    />
-                    <circle cx="11" cy="10.5" r="3.8" fill={FLAME} />
-                  </svg>
-                </div>
-                <FlowLine delay="1.2s" />
-                <FlowBox>
-                  <CalendarCheck size={30} strokeWidth={1.75} aria-hidden="true" />
-                </FlowBox>
-              </div>
-              <ol className="mt-8 grid grid-cols-3 text-center">
-                {[
-                  ["Kunden söker", "Massage, PT, frisör …"],
-                  ["Mapsa visar dig", "Med pris på kartan"],
-                  ["Din bokning", "Kunden bokar hos dig"],
-                ].map(([t, s], i) => (
-                  <li key={t} className={i === 0 ? "text-left sm:text-center" : i === 2 ? "text-right sm:text-center" : ""}>
-                    <p className={`${label} text-white/80`}>{t}</p>
-                    <p className="mt-1.5 hidden text-sm text-white/45 sm:block">{s}</p>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <dl className="mx-auto mt-20 grid max-w-[1200px] grid-cols-2 gap-y-12 border-t border-white/10 pt-14 sm:mt-28 lg:grid-cols-4">
-              {STATS.map((s) => (
-                <div key={s.label} className="landing-reveal text-center">
-                  <dd className="text-stat font-light">
-                    {s.value}
-                    {s.unit && <span className="text-white/35">{s.unit}</span>}
-                  </dd>
-                  <dt className="mt-3 text-base text-white/55">{s.label}</dt>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
-
-        {/* ---------- Anmälan (akt 3): bygg din prislapp ---------- */}
+        {/* ---------- Akt 3: anmälan ---------- */}
         <section id="anmal" className="mx-auto max-w-[1440px] scroll-mt-16 px-4 pt-24 pb-24 sm:px-8 sm:pt-32 sm:pb-32 lg:px-16">
           <div className="max-w-2xl">
             <p className={`${label} text-stone`}>Anmälan</p>
@@ -300,52 +154,19 @@ export default function ForetagPage() {
           </div>
         </section>
 
-        {/* ---------- Priser ---------- */}
-        <section id="priser" className="mx-auto max-w-[1440px] scroll-mt-16 px-4 py-24 sm:px-8 sm:py-32 lg:px-16">
-          <div className="landing-reveal mx-auto max-w-2xl text-center">
-            <p className={`${label} text-stone`}>Priser</p>
-            <h2 className="mt-5 font-serif text-headline text-balance">
-              Börja gratis. <span className="text-stone">Väx när du vill.</span>
-            </h2>
-            <p className="mt-5 text-lg text-stone">Ingen provision på dina bokningar – du betalar bara för hur mycket du syns.</p>
-          </div>
-
-          <ul className="mt-16 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {PLANS.map((p) => {
-              const featured = Boolean(p.badge);
-              return (
-                <li
-                  key={p.name}
-                  className={`landing-reveal flex flex-col rounded-3xl p-7 ${
-                    featured ? "bg-panel text-[#f3ede2]" : "bg-sand-light ring-1 ring-sand-deep"
-                  }`}
-                >
-                  <div className="flex h-7 items-center justify-between gap-2">
-                    <h3 className={`${label} ${featured ? "text-white/70" : "text-stone"}`}>{p.name}</h3>
-                    {p.badge && <span className="rounded-full bg-flame px-2.5 py-1 text-xs font-semibold text-white">{p.badge}</span>}
-                  </div>
-                  <p className="mt-8 font-serif text-[56px] leading-none tracking-tight">{p.price}</p>
-                  <p className={`mt-2 text-sm ${featured ? "text-white/55" : "text-stone"}`}>{p.period}</p>
-                  <ul className={`mt-8 flex flex-1 flex-col gap-3 border-t pt-6 ${featured ? "border-white/10" : "border-sand-deep"}`}>
-                    {p.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-base">
-                        <Check size={18} strokeWidth={2.5} className="mt-0.5 shrink-0 text-flame" aria-hidden="true" />
-                        <span className={featured ? "text-white/90" : ""}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="mt-10 flex justify-center">
-            <SignupButton />
-          </div>
+        {/* ---------- Förtroende: pris + frågor ---------- */}
+        <section aria-label="Pris" className="border-y border-sand-deep">
+          <p className="mx-auto max-w-[1440px] px-4 py-10 text-center font-serif text-[clamp(1.6rem,1.2rem+1.5vw,2.5rem)] leading-tight text-balance sm:px-8">
+            Gratis att komma igång.
+            {TOP_PRICE && <span className="text-stone"> Vill du synas först i din kategori: {TOP_PRICE} kr/mån.</span>}
+          </p>
         </section>
 
-        {/* ---------- Frågor ---------- */}
-        <section id="fragor" className="mx-auto grid max-w-[1440px] scroll-mt-20 gap-10 px-4 pb-24 sm:px-8 sm:pb-32 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:px-16">
-          <div className="landing-reveal">
+        <section
+          id="fragor"
+          className="mx-auto grid max-w-[1440px] scroll-mt-20 gap-10 px-4 py-24 sm:px-8 sm:py-32 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:px-16"
+        >
+          <div>
             <p className={`${label} text-stone`}>Frågor</p>
             <h2 className="mt-5 font-serif text-headline">
               Bra <span className="text-stone">att veta</span>
@@ -363,37 +184,24 @@ export default function ForetagPage() {
                     aria-hidden="true"
                   />
                 </summary>
-                <p className="-mt-2 max-w-2xl pb-6 text-base leading-relaxed text-stone">{f.a}</p>
+                <p className="-mt-2 max-w-2xl pb-6 text-base leading-relaxed text-stone">
+                  {f.a}
+                  {f.q.startsWith("Hur tar jag bort") && (
+                    <>
+                      {" "}
+                      <Link href="/integritet" className="font-medium text-panel underline underline-offset-4">
+                        Integritetspolicy
+                      </Link>
+                    </>
+                  )}
+                </p>
               </details>
             ))}
           </div>
         </section>
-
-        {/* ---------- Avslutning: linjer som strålar in ---------- */}
-        <section className="relative overflow-hidden border-t border-sand-deep">
-          <RadiatingLines className="absolute inset-0 h-full w-full" />
-          <div className="landing-reveal relative mx-auto flex max-w-3xl flex-col items-center px-5 py-28 text-center sm:py-40">
-            <p className="inline-flex items-center gap-2 rounded-full bg-sand-light px-4 py-2 text-sm font-medium shadow-[0_2px_12px_rgb(0_0_0/0.08)]">
-              <span className="font-semibold">0 kr</span> första månaden
-            </p>
-            <h2 className="mt-7 font-serif text-display text-balance">
-              Syns där <span className="text-stone">kunderna letar.</span>
-            </h2>
-            <p className="mt-6 max-w-md text-lg leading-relaxed text-stone">
-              Du behåller din bokning – vi ser till att fler hittar dit.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-5">
-              <SignupButton />
-              <Link href="/" className="inline-flex items-center gap-1 text-base font-medium underline-offset-4 hover:underline">
-                Se kartan
-                <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
 
-      <footer className="border-t border-sand-deep pb-[env(safe-area-inset-bottom)]">
+      <footer className="border-t border-sand-deep pb-[calc(env(safe-area-inset-bottom)+88px)] lg:pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-4">
             <Logo />
@@ -401,101 +209,97 @@ export default function ForetagPage() {
           </div>
           <nav aria-label="Sidfot" className="flex gap-5 text-sm text-stone">
             <Link href="/" className="hover:text-panel">
-              Kartan
+              Hitta utövare
             </Link>
-            <a href="#priser" className="hover:text-panel">
-              Priser
-            </a>
-            <a href="#fragor" className="hover:text-panel">
-              Frågor
-            </a>
+            <Link href="/integritet" className="hover:text-panel">
+              Integritetspolicy
+            </Link>
           </nav>
         </div>
       </footer>
+
+      <StickyCta />
     </div>
   );
 }
 
-// ---------- Små delar ----------
+// ---------- Akt 2: scenerna ----------
 
-function FlowBox({ children }: { children: React.ReactNode }) {
+function Scene({ n, text, sub, children }: { n: number; text: string; sub?: string; children: React.ReactNode }) {
   return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-white ring-1 ring-white/10 sm:h-24 sm:w-24">
-      {children}
-    </div>
-  );
-}
-
-function FlowLine({ delay = "0s" }: { delay?: string }) {
-  return (
-    <div className="relative h-px flex-1 bg-white/20">
-      <span
-        className="landing-travel landing-motion absolute -top-[3px] h-[7px] w-[7px] -translate-x-1/2 rounded-full bg-flame shadow-[0_0_12px_rgb(255_90_31)]"
-        style={{ animationDelay: delay }}
-        aria-hidden="true"
-      />
-    </div>
-  );
-}
-
-// Kort till vänster i heron: så ser en profil ut (exempel).
-function HeroProfileCard() {
-  return (
-    <div
-      className="absolute top-[150px] left-[15.45%] hidden w-[260px] -translate-x-1/2 rounded-2xl bg-sand-light p-5 text-panel shadow-[0_30px_60px_-20px_rgb(0_0_0/0.6)] lg:block"
-      aria-hidden="true"
-    >
-      <p className={`${label} text-stone`}>Frisör · Trossö</p>
-      <p className="mt-1.5 text-xl font-semibold tracking-tight">Din salong här</p>
-      <ul className="mt-3 divide-y divide-sand-deep text-sm">
-        {[
-          ["Klippning", "300 kr"],
-          ["Hår och skägg", "500 kr"],
-          ["Barnklippning", "250 kr"],
-        ].map(([n, p]) => (
-          <li key={n} className="flex justify-between py-2">
-            <span>{n}</span>
-            <span className="font-semibold">{p}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-3 flex h-10 items-center justify-center rounded-lg bg-panel text-sm font-semibold text-white">Boka</div>
-    </div>
-  );
-}
-
-// Kort till höger i heron: klick till bokning (illustration, inga riktiga siffror).
-function HeroClicksCard() {
-  const bars = [30, 42, 36, 55, 48, 70, 92];
-  return (
-    <div
-      className="absolute top-[150px] left-[84.55%] hidden w-[260px] -translate-x-1/2 rounded-2xl bg-sand-light p-5 text-panel shadow-[0_30px_60px_-20px_rgb(0_0_0/0.6)] lg:block"
-      aria-hidden="true"
-    >
-      <div className="flex items-center justify-between">
-        <p className={`${label} text-stone`}>Klick till bokning</p>
-        <span className="rounded-full bg-flame/15 px-2 py-0.5 text-[10px] font-semibold text-flame">Exempel</span>
+    <li className="landing-reveal flex flex-col">
+      <div className="relative h-60 overflow-hidden rounded-3xl bg-sand-deep sm:h-72" aria-hidden="true">
+        {children}
       </div>
-      <div className="mt-5 flex h-28 items-end gap-2">
-        {bars.map((h, i) => (
-          <div key={i} className="flex flex-1 flex-col justify-end gap-1" style={{ height: `${h}%` }}>
-            <div
-              className={`flex-1 rounded-[5px] ${i >= 5 ? "bg-flame" : "bg-sand-deep"}`}
-              style={
-                i >= 5
-                  ? { backgroundImage: "repeating-linear-gradient(135deg, rgb(255 255 255 / 0.22) 0 4px, transparent 4px 8px)" }
-                  : undefined
-              }
-            />
-          </div>
-        ))}
+      <p className={`${label} mt-6 text-stone`}>{n} / 3</p>
+      <p className="mt-2 font-serif text-[clamp(1.75rem,1.4rem+1.2vw,2.4rem)] leading-[1.05] text-balance">{text}</p>
+      {sub && <p className="mt-3 max-w-sm text-base leading-relaxed text-stone">{sub}</p>}
+    </li>
+  );
+}
+
+function SceneSearch() {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[linear-gradient(180deg,#bcdcf3,#e6e0d3)] px-6">
+      <div className="flex h-14 w-full max-w-xs items-center gap-3 rounded-full bg-white px-5 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.35)]">
+        <Search className="size-5 shrink-0" strokeWidth={2} />
+        <span className="text-lg">
+          frisör
+          <span className="scene-caret ml-0.5 inline-block h-5 w-[2px] translate-y-[3px] bg-panel" />
+        </span>
       </div>
-      <div className={`${label} mt-2 flex justify-between text-[10px] text-stone`}>
-        {["M", "T", "O", "T", "F", "L", "S"].map((d, i) => (
-          <span key={i} className="flex-1 text-center">
-            {d}
-          </span>
-        ))}
+      <span className="rounded-full bg-white/70 px-3 py-1.5 text-sm font-medium">Karlskrona</span>
+    </div>
+  );
+}
+
+function SceneMap() {
+  const pills = [
+    { left: "20%", top: "28%", label: "fr. 300 kr" },
+    { left: "55%", top: "50%", label: "fr. 250 kr", active: true },
+    { left: "76%", top: "22%", label: "fr. 400 kr" },
+    { left: "34%", top: "74%", label: "fr. 600 kr" },
+  ];
+  return (
+    <div className="absolute inset-0" style={{ background: "#f2f3ef" }}>
+      <div className="absolute -right-10 top-0 h-full w-[28%] -skew-x-12" style={{ background: "#b4dcf7" }} />
+      <div className="absolute left-[8%] top-[56%] h-[34%] w-[18%] rounded-xl" style={{ background: "#d8ecc9" }} />
+      <div className="absolute left-0 top-[42%] h-3 w-full bg-white" />
+      <div className="absolute left-[44%] top-0 h-full w-3 bg-white" />
+      {[
+        [6, 8, 14, 18],
+        [26, 8, 12, 16],
+        [50, 10, 14, 18],
+        [50, 62, 12, 20],
+      ].map(([l, t, w, h]) => (
+        <div key={`${l}-${t}`} className="absolute rounded-[4px]" style={{ left: `${l}%`, top: `${t}%`, width: `${w}%`, height: `${h}%`, background: "#e6e6e3" }} />
+      ))}
+      {pills.map((p) => (
+        <span
+          key={p.label}
+          className={`absolute inline-flex h-8 -translate-x-1/2 items-center rounded-full px-3 text-sm font-semibold whitespace-nowrap shadow-[0_2px_10px_rgb(0_0_0/0.14)] ${
+            p.active ? "scale-110 bg-flame text-white" : "bg-white text-black"
+          }`}
+          style={{ left: p.left, top: p.top }}
+        >
+          {p.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function SceneBook() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(180deg,#efe9de,#e2d9c8)] px-6">
+      <div className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-[0_20px_50px_-20px_rgb(0_0_0/0.35)]">
+        <p className={`${label} text-stone`}>Frisör · Trossö</p>
+        <p className="mt-1 text-xl font-semibold tracking-tight">Din salong</p>
+        <p className="mt-0.5 text-base text-stone">fr. 250 kr · Klippning</p>
+        <div className="relative mt-4">
+          <span className="scene-pulse absolute inset-0 rounded-lg bg-flame" />
+          <span className="relative flex h-11 items-center justify-center rounded-lg bg-flame text-base font-semibold text-white">Boka</span>
+        </div>
       </div>
     </div>
   );

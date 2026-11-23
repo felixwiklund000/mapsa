@@ -17,6 +17,13 @@ export default function ErrorPage({ error, retry }: { error: unknown; retry: () 
         <button type="button" onClick={() => retry()} className="btn-primary mt-8 w-full sm:inline-flex sm:w-auto">
           Försök igen
         </button>
+        {/* Felkod att skicka till oss (serverfel visar bara en kod, aldrig detaljer). */}
+        <p className="mt-10 text-xs text-muted">
+          Felkod: {(error as { digest?: string })?.digest ?? (error instanceof Error ? error.message.slice(0, 160) : "okänd")} ·{" "}
+          <a href="/api/status" className="underline underline-offset-2">
+            status
+          </a>
+        </p>
       </div>
     </main>
   );

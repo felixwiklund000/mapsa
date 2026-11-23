@@ -9,17 +9,24 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { CircleHelp, Map, Menu, Route, Store, Tag, X, type LucideIcon } from "lucide-react";
+import { CircleHelp, Map, Menu, Store, X, type LucideIcon } from "lucide-react";
 
 type Item = { href: string; label: string; hint?: string; icon: LucideIcon; match?: string };
 
+// Privatpersoner först – det är de som använder Mapsa mest.
 const MAIN: Item[] = [
   { href: "/", label: "Kartan", hint: "Hitta och jämför utövare", icon: Map, match: "/" },
-  { href: "/foretag", label: "För företag", hint: "Syns på Mapsa", icon: Store, match: "/foretag" },
+  { href: "/foretag", label: "För företag", hint: "Lägg upp ditt företag", icon: Store, match: "/foretag" },
 ];
-const MORE: Item[] = [
-  { href: "/foretag#sa-funkar-det", label: "Så funkar det", icon: Route },
-  { href: "/foretag#priser", label: "Priser", icon: Tag },
+const QUICK = [
+  { href: "/?kategori=frisor", label: "Frisör" },
+  { href: "/?kategori=massage", label: "Massage" },
+  { href: "/?kategori=pt", label: "PT" },
+  { href: "/?kategori=naprapat", label: "Naprapat" },
+  { href: "/?kategori=skonhet", label: "Skönhet" },
+];
+const BUSINESS: Item[] = [
+  { href: "/foretag#anmal", label: "Lägg upp ditt företag", hint: "Gratis att komma igång", icon: Store },
   { href: "/foretag#fragor", label: "Vanliga frågor", icon: CircleHelp },
 ];
 
@@ -108,55 +115,65 @@ export function SiteMenu({
           className="site-menu-panel absolute top-[calc(100%+8px)] right-0 z-50 w-[290px] overflow-hidden rounded-2xl border border-line bg-canvas p-2 text-ink shadow-[0_8px_28px_rgb(0_0_0/0.16)]"
         >
           <nav aria-label="Meny">
-            <ul>
-              {MAIN.map((item) => {
-                const isCurrent = item.match === current;
-                const Icon = item.icon;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      data-menu-item
-                      onClick={close}
-                      aria-current={isCurrent ? "page" : undefined}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 outline-none hover:bg-fill focus-visible:bg-fill"
-                    >
-                      <span
-                        className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isCurrent ? "bg-ink text-canvas" : "bg-fill text-ink"}`}
-                      >
-                        <Icon className="size-5" strokeWidth={2} aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-base font-semibold">{item.label}</span>
-                        <span className="block text-sm text-muted">{item.hint}</span>
-                      </span>
-                      {isCurrent && <span className="size-2 rounded-full bg-ink" aria-hidden />}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-            <div className="mx-3 my-2 h-px bg-line" />
-            <ul>
-              {MORE.map(({ href, label, icon: Icon }) => (
-                <li key={href}>
+            {/* För dig som letar */}
+            <p className="px-3 pt-2 pb-1 text-xs font-semibold text-muted">Hitta</p>
+            <ItemLink item={MAIN[0]} current={current} onClick={close} />
+            <ul className="flex flex-wrap gap-1.5 px-3 pt-1 pb-2">
+              {QUICK.map((q) => (
+                <li key={q.href}>
                   <Link
-                    href={href}
+                    href={q.href}
                     data-menu-item
                     onClick={close}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base outline-none hover:bg-fill focus-visible:bg-fill"
+                    className="flex h-8 items-center rounded-full bg-fill px-3 text-sm font-medium outline-none hover:bg-line focus-visible:bg-line"
                   >
-                    <Icon className="size-5 text-muted" strokeWidth={2} aria-hidden />
-                    {label}
+                    {q.label}
                   </Link>
                 </li>
               ))}
             </ul>
+
+            {/* För företag – längre ner, tydligt avskilt */}
+            <div className="mx-3 my-2 h-px bg-line" />
+            <p className="px-3 pt-1 pb-1 text-xs font-semibold text-muted">För företag</p>
+            <ItemLink item={{ ...BUSINESS[0], match: "/foretag" }} current={current} onClick={close} />
+            <Link
+              href={BUSINESS[1].href}
+              data-menu-item
+              onClick={close}
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-base outline-none hover:bg-fill focus-visible:bg-fill"
+            >
+              <CircleHelp className="size-5 text-muted" strokeWidth={2} aria-hidden />
+              {BUSINESS[1].label}
+            </Link>
           </nav>
           <p className="mt-1 border-t border-line px-3 pt-3 pb-1.5 text-xs text-muted">Mapsa UF · Blekinge</p>
         </div>
       )}
     </div>
+  );
+}
+
+function ItemLink({ item, current, onClick }: { item: Item; current?: string; onClick: () => void }) {
+  const isCurrent = item.match === current;
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      data-menu-item
+      onClick={onClick}
+      aria-current={isCurrent ? "page" : undefined}
+      className="flex items-center gap-3 rounded-xl px-3 py-2.5 outline-none hover:bg-fill focus-visible:bg-fill"
+    >
+      <span className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isCurrent ? "bg-ink text-canvas" : "bg-fill text-ink"}`}>
+        <Icon className="size-5" strokeWidth={2} aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-base font-semibold">{item.label}</span>
+        {item.hint && <span className="block text-sm text-muted">{item.hint}</span>}
+      </span>
+      {isCurrent && <span className="size-2 rounded-full bg-ink" aria-hidden />}
+    </Link>
   );
 }
 
