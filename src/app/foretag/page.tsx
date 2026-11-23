@@ -139,7 +139,7 @@ export default function ForetagPage() {
             >
               Kom igång
             </a>
-            <SiteMenu />
+            <SiteMenu current="/foretag" />
           </div>
         </div>
       </header>

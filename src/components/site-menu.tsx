@@ -9,7 +9,6 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { CircleHelp, Map, Menu, Route, Store, Tag, X, type LucideIcon } from "lucide-react";
 
 type Item = { href: string; label: string; hint?: string; icon: LucideIcon; match?: string };
@@ -24,9 +23,17 @@ const MORE: Item[] = [
   { href: "/foretag#fragor", label: "Vanliga frågor", icon: CircleHelp },
 ];
 
-export function SiteMenu({ variant = "pill", className = "" }: { variant?: "pill" | "round"; className?: string }) {
+// current: vilken sida man är på ("/" eller "/foretag") – markeras i menyn.
+export function SiteMenu({
+  variant = "pill",
+  current,
+  className = "",
+}: {
+  variant?: "pill" | "round";
+  current?: "/" | "/foretag";
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -103,7 +110,7 @@ export function SiteMenu({ variant = "pill", className = "" }: { variant?: "pill
           <nav aria-label="Meny">
             <ul>
               {MAIN.map((item) => {
-                const current = item.match === pathname;
+                const isCurrent = item.match === current;
                 const Icon = item.icon;
                 return (
                   <li key={item.href}>
@@ -111,11 +118,11 @@ export function SiteMenu({ variant = "pill", className = "" }: { variant?: "pill
                       href={item.href}
                       data-menu-item
                       onClick={close}
-                      aria-current={current ? "page" : undefined}
+                      aria-current={isCurrent ? "page" : undefined}
                       className="flex items-center gap-3 rounded-xl px-3 py-2.5 outline-none hover:bg-fill focus-visible:bg-fill"
                     >
                       <span
-                        className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${current ? "bg-ink text-canvas" : "bg-fill text-ink"}`}
+                        className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${isCurrent ? "bg-ink text-canvas" : "bg-fill text-ink"}`}
                       >
                         <Icon className="size-5" strokeWidth={2} aria-hidden />
                       </span>
@@ -123,7 +130,7 @@ export function SiteMenu({ variant = "pill", className = "" }: { variant?: "pill
                         <span className="block text-base font-semibold">{item.label}</span>
                         <span className="block text-sm text-muted">{item.hint}</span>
                       </span>
-                      {current && <span className="size-2 rounded-full bg-ink" aria-hidden />}
+                      {isCurrent && <span className="size-2 rounded-full bg-ink" aria-hidden />}
                     </Link>
                   </li>
                 );

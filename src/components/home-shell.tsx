@@ -194,11 +194,11 @@ export function HomeShell({
         <div className="absolute inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-30 lg:relative lg:inset-auto lg:shrink-0 lg:px-8 lg:pt-6">
           <div className="hidden lg:mb-6 lg:flex lg:items-center lg:justify-between">
             <Logo />
-            <SiteMenu />
+            <SiteMenu current="/" />
           </div>
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">{search}</div>
-            <SiteMenu variant="round" className="lg:hidden" />
+            <SiteMenu variant="round" current="/" className="lg:hidden" />
           </div>
         </div>
 
