@@ -195,10 +195,17 @@ export function PractitionerMap({
     return () => {
       cancelled = true;
       resizeObserver?.disconnect();
-      markers.forEach((m) => m.remove());
-      markers.clear();
-      mapRef.current?.remove();
+      // Nedstängning får aldrig krascha sidan (MapLibre tar själv bort
+      // kontroller och lappar när kartan tas bort).
+      const map = mapRef.current;
       mapRef.current = null;
+      try {
+        markers.forEach((m) => m.remove());
+        map?.remove();
+      } catch (err) {
+        console.error("Kartan kunde inte stängas ner", err);
+      }
+      markers.clear();
       setReady(false);
     };
   }, [declutter]);
@@ -211,7 +218,14 @@ export function PractitionerMap({
     const control = new lib.NavigationControl({ showCompass: false });
     map.addControl(control, "top-right");
     return () => {
-      map.removeControl(control);
+      // Är kartan redan borttagen har MapLibre redan tagit bort knapparna –
+      // att ta bort dem igen kraschar ("this._map.off").
+      if (mapRef.current !== map) return;
+      try {
+        map.removeControl(control);
+      } catch {
+        // redan borta
+      }
     };
   }, [ready, showZoom]);
 

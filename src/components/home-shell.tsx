@@ -38,6 +38,10 @@ export function HomeShell({
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [rootHeight, setRootHeight] = useState(0);
+  // Kartan skapas när ytan först fått en höjd och tas sedan aldrig bort igen
+  // bara för att höjden tillfälligt mäts till 0 (Safari vid adressfält/zoom).
+  const [mapMounted, setMapMounted] = useState(false);
+  if (rootHeight > 0 && !mapMounted) setMapMounted(true);
   const [isDesktop, setIsDesktop] = useState(false);
   const [snap, setSnap] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
@@ -188,7 +192,7 @@ export function HomeShell({
     >
       {/* Karta */}
       <div className="absolute inset-0 z-0 lg:relative lg:order-2">
-        {rootHeight > 0 && (
+        {mapMounted && (
           <PractitionerMap
             points={items}
             selectedSlug={activeSlug}
