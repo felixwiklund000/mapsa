@@ -4,7 +4,7 @@ import type { Filters } from "@/lib/search";
 // Sökfält enligt Ubers "Vart vill du åka?": helt runt, 60 px högt, vit
 // bakgrund, 1 px kant, ikon + 18 px text. Skugga bara när det flyter över
 // kartan (mobil). Enter söker.
-// Valda kategorier och område följer med som dolda fält.
+// Valda kategorier följer med som dolda fält.
 
 export function SearchBar({ filters }: { filters?: Filters }) {
   return (
@@ -17,7 +17,6 @@ export function SearchBar({ filters }: { filters?: Filters }) {
       {filters?.categories.map((c) => (
         <input key={c} type="hidden" name="kategori" value={c} />
       ))}
-      {filters?.area && <input type="hidden" name="omrade" value={filters.area} />}
 
       <Search className="size-6 shrink-0" strokeWidth={2} aria-hidden />
       <label className="min-w-0 flex-1">

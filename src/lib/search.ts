@@ -1,15 +1,13 @@
 // Sök och filter för startsidan. Filtren ligger i URL:en
-// (?q=trossö&kategori=massage&kategori=pt&omrade=Lyckeby) så att en sökning
-// går att dela och fungerar utan JavaScript.
+// (?q=trossö&kategori=massage&kategori=pt) så att en sökning går att dela och
+// fungerar utan JavaScript. (Inget områdesfilter – kartan visar området.)
 
 import { isCategorySlug, type CategorySlug, getCategory } from "./categories.ts";
-import { findArea } from "./areas.ts";
 import type { Practitioner } from "./db/practitioners.ts";
 
 export type Filters = {
   q: string;
   categories: CategorySlug[];
-  area: string | null;
 };
 
 type RawParams = Record<string, string | string[] | undefined>;
@@ -22,9 +20,7 @@ function asArray(value: string | string[] | undefined): string[] {
 export function parseFilters(params: RawParams): Filters {
   const q = (asArray(params.q)[0] ?? "").trim().slice(0, 100);
   const categories = [...new Set(asArray(params.kategori).filter(isCategorySlug))];
-  const areaParam = asArray(params.omrade)[0];
-  const area = areaParam ? (findArea(areaParam)?.name ?? null) : null;
-  return { q, categories, area };
+  return { q, categories };
 }
 
 function normalize(s: string): string {
@@ -61,7 +57,6 @@ export function filterPractitioners(
   return practitioners.filter(
     (p) =>
       matchesQuery(p, filters.q) &&
-      (filters.area === null || p.area === filters.area) &&
       (options.ignoreCategories || filters.categories.length === 0 || filters.categories.includes(p.category)),
   );
 }
@@ -71,7 +66,6 @@ export function filtersToHref(filters: Filters): string {
   const params = new URLSearchParams();
   if (filters.q) params.set("q", filters.q);
   for (const c of filters.categories) params.append("kategori", c);
-  if (filters.area) params.set("omrade", filters.area);
   const qs = params.toString();
   return qs ? `/?${qs}` : "/";
 }
@@ -82,8 +76,4 @@ export function toggleCategoryHref(filters: Filters, slug: CategorySlug): string
     ? filters.categories.filter((c) => c !== slug)
     : [...filters.categories, slug];
   return filtersToHref({ ...filters, categories });
-}
-
-export function hasActiveFilters(filters: Filters): boolean {
-  return filters.q !== "" || filters.categories.length > 0 || filters.area !== null;
 }

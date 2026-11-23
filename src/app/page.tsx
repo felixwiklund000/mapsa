@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { connection } from "next/server";
 import { CategoryFilter } from "@/components/category-filter";
 import { HomeShell, type ShellItem } from "@/components/home-shell";
-import { formatPrice, lowestPrice, PractitionerCard, PractitionerRow } from "@/components/practitioner-row";
+import { formatPrice, lowestPrice, PractitionerRow } from "@/components/practitioner-row";
 import { SearchBar } from "@/components/search-bar";
 import { START_HIDE_SCRIPT, StartHero } from "@/components/start-hero";
 import { brandFonts } from "./foretag/fonts";
@@ -46,24 +46,13 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["sea
         results.length === 0 ? (
           <EmptyState filters={filters} all={all} />
         ) : (
-          <>
-            {/* Mobil: rader i bottenarket */}
-            <ul className="space-y-2 lg:hidden">
-              {results.map((p) => (
-                <li key={p.id}>
-                  <PractitionerRow practitioner={p} />
-                </li>
-              ))}
-            </ul>
-            {/* Desktop: kort med stor bild i två kolumner */}
-            <ul className="hidden gap-x-6 gap-y-8 pt-2 lg:grid lg:grid-cols-2">
-              {results.map((p) => (
-                <li key={p.id}>
-                  <PractitionerCard practitioner={p} />
-                </li>
-              ))}
-            </ul>
-          </>
+          <ul className="space-y-1">
+            {results.map((p) => (
+              <li key={p.id}>
+                <PractitionerRow practitioner={p} />
+              </li>
+            ))}
+          </ul>
         )
       }
       footer={<Footer />}
@@ -84,8 +73,8 @@ function ListHeader({
 }) {
   return (
     <>
-      <h2 className="mt-2 text-lg font-semibold lg:mt-0">{count === undefined ? " " : `${count} utövare`}</h2>
-      <div className="mt-4">
+      <h2 className="mt-1 text-lg font-semibold lg:mt-0">{count === undefined ? " " : `${count} utövare`}</h2>
+      <div className="mt-3">
         <CategoryFilter filters={filters} available={available} />
       </div>
     </>
@@ -143,7 +132,7 @@ function EmptyState({ filters, all }: { filters: Filters; all: Practitioner[] })
       <div className="py-4">
         <p className="font-semibold">Inga utövare inom {emptyCategory.name.toLocaleLowerCase("sv-SE")} än</p>
         <p className="mt-1 text-muted">Är du utövare? Bli en av de första. Första månaden är gratis.</p>
-        <Link href="/bli-utovare" className="btn-secondary mt-4">
+        <Link href="/foretag#anmal" className="btn-secondary mt-4">
           Lista din verksamhet
         </Link>
       </div>
@@ -152,7 +141,7 @@ function EmptyState({ filters, all }: { filters: Filters; all: Practitioner[] })
   return (
     <div className="py-4">
       <p className="font-semibold">Inga träffar</p>
-      <p className="mt-1 text-muted">Prova ett annat sökord, område eller en annan kategori.</p>
+      <p className="mt-1 text-muted">Prova ett annat sökord eller en annan kategori.</p>
       <Link href="/" scroll={false} className="btn-secondary mt-4">
         Visa alla utövare
       </Link>
@@ -168,16 +157,7 @@ function HomeFallback() {
       header={<ListHeader available={[]} />}
       list={
         <>
-        <ul className="hidden gap-x-6 gap-y-8 pt-2 lg:grid lg:grid-cols-2" aria-busy="true" aria-label="Hämtar utövare">
-          {Array.from({ length: 4 }, (_, i) => (
-            <li key={i}>
-              <div className="aspect-[4/3] animate-pulse rounded-xl bg-fill" />
-              <div className="mt-3 h-4 w-2/3 animate-pulse rounded-lg bg-fill" />
-              <div className="mt-2 h-3 w-1/2 animate-pulse rounded-lg bg-fill" />
-            </li>
-          ))}
-        </ul>
-        <ul className="space-y-2 lg:hidden" aria-busy="true" aria-label="Hämtar utövare">
+        <ul className="space-y-1" aria-busy="true" aria-label="Hämtar utövare">
           {Array.from({ length: 5 }, (_, i) => (
             <li key={i} className="flex h-20 items-center gap-4">
               <div className="size-16 shrink-0 animate-pulse rounded-lg bg-fill" />

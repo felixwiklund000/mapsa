@@ -3,22 +3,25 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from "react";
 import { animate, useMotionValue, useReducedMotion, useTransform, motion } from "motion/react";
 import { Logo } from "./site-header";
-import { PageSwitch, SiteMenu } from "./site-menu";
+import Link from "next/link";
+import { SiteMenu } from "./site-menu";
 import { PractitionerMap, type MapPoint } from "./practitioner-map";
 import { SelectedCard, type CardItem } from "./selected-card";
 
 // Startsidans layout (se docs/design-spec.md).
 //
 // Mobil:   ingen header, kartan fyller skärmen, sökfältet flyter överst och
-//          listan ligger i ett bottenark.
-// Desktop: panel till vänster (logga, sök, rubrik, filter, lista), karta till höger.
+//          listan ligger i ett bottenark: ihopfällt som standard ("N utövare"
+//          + kategorier, högst 40 % av höjden), dras upp för hela listan.
+// Desktop: smal panel till vänster (380 px: logga, sök, rubrik, filter,
+//          lista), karta till höger. Inget bottenark.
 //
 // Tryck på en prislapp eller en rad väljer utövaren: prislappen markeras och
 // ett kort med Boka ersätter listan (prislapp → Boka = 2 tryck). Kortet
 // stängs med ✕, tryck på kartan, Esc eller svep ner. Kartan zoomar aldrig vid val.
 
-const SNAPS = [0.25, 0.5, 0.9];
-const SEARCH_AREA = 92; // 16 (marginal) + 60 (sökfält) + 16 (luft)
+const EXPANDED = 0.9; // uppdraget ark: andel av höjden
+const MAX_COLLAPSED = 0.4; // ihopfällt ark får aldrig täcka mer än så
 
 export type ShellItem = MapPoint & CardItem;
 
@@ -53,13 +56,17 @@ export function HomeShell({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [rootHeight, setRootHeight] = useState(0);
   // Kartan skapas när ytan först fått en höjd och tas sedan aldrig bort igen
   // bara för att höjden tillfälligt mäts till 0 (Safari vid adressfält/zoom).
   const [mapMounted, setMapMounted] = useState(false);
   if (rootHeight > 0 && !mapMounted) setMapMounted(true);
   const [isDesktop, setIsDesktop] = useState(false);
-  const [snap, setSnap] = useState(1);
+  const [expanded, setExpanded] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [searchBottom, setSearchBottom] = useState(0);
   const [selected, setSelected] = useState<string | null>(initialSelected);
   const [cardHeight, setCardHeight] = useState(0);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -76,8 +83,13 @@ export function HomeShell({
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setRootHeight(el.clientHeight));
+    const ro = new ResizeObserver(() => {
+      setRootHeight(el.clientHeight);
+      const search = searchRef.current;
+      if (search) setSearchBottom(search.offsetTop + search.offsetHeight);
+    });
     ro.observe(el);
+    if (searchRef.current) ro.observe(searchRef.current);
     const mq = window.matchMedia("(min-width: 1024px)");
     const update = () => setIsDesktop(mq.matches);
     update();
@@ -97,8 +109,21 @@ export function HomeShell({
     return () => ro.disconnect();
   }, [cardOpen]);
 
+  // Ihopfällt ark = handtaget + "N utövare" + kategoriknapparna (uppmätt).
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [cardOpen]);
+
+  const collapsedHeight = Math.min(headerHeight, rootHeight * MAX_COLLAPSED);
+  const expandedHeight = rootHeight * EXPANDED;
+  const listHeight = expanded ? expandedHeight : collapsedHeight;
+
   // Glid till valt läge (fjäder), eller hoppa direkt vid reducerad rörelse.
-  const sheetTarget = cardOpen && !isDesktop && cardHeight > 0 ? cardHeight : rootHeight * SNAPS[snap];
+  const sheetTarget = cardOpen && !isDesktop && cardHeight > 0 ? cardHeight : listHeight;
   useEffect(() => {
     if (!rootHeight || !sheetTarget) return;
     if (sheetHeight.get() === 0 || reduceMotion) {
@@ -154,12 +179,12 @@ export function HomeShell({
   function startDrag(e: PointerEvent<HTMLElement>, fromList: boolean) {
     if (isDesktop || !rootHeight) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
-    if (fromList && snap === SNAPS.length - 1) return; // i helt läge scrollar listan i stället
+    if (fromList && expanded) return; // uppdraget ark: listan scrollar i stället
     const startY = e.clientY;
     const startX = e.clientX;
     const startH = sheetHeight.get();
-    const min = rootHeight * SNAPS[0];
-    const max = rootHeight * SNAPS[SNAPS.length - 1];
+    const min = collapsedHeight;
+    const max = expandedHeight;
     let active = false;
     let last = { y: startY, t: e.timeStamp };
     let velocity = 0; // px/ms, positivt = nedåt
@@ -182,14 +207,11 @@ export function HomeShell({
       stop();
       if (!active) return;
       const projected = sheetHeight.get() - velocity * 200;
-      let nearest = 0;
-      SNAPS.forEach((s, i) => {
-        if (Math.abs(rootHeight * s - projected) < Math.abs(rootHeight * SNAPS[nearest] - projected)) nearest = i;
-      });
-      setSnap(nearest);
+      const open = Math.abs(max - projected) < Math.abs(min - projected);
+      setExpanded(open);
       animate(
         sheetHeight,
-        rootHeight * SNAPS[nearest],
+        open ? max : min,
         reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 38, velocity: -velocity * 1000 },
       );
       swallowNextClick();
@@ -244,16 +266,17 @@ export function HomeShell({
     window.addEventListener("pointercancel", end);
   }
 
-  const snapHeight = rootHeight * SNAPS[snap];
+  // Luft för kartan: sökfältets underkant och arkets höjd (verkliga mått), så
+  // att ingen prislapp hamnar bakom dem. Desktop: panelen täcker inte kartan.
   const insets = isDesktop
     ? { top: 0, bottom: 0, left: 0, right: 0 }
-    : { top: SEARCH_AREA, bottom: cardOpen ? cardHeight : Math.min(snapHeight, rootHeight * SNAPS[1]), left: 0, right: 0 };
-  const fullOpen = snap === SNAPS.length - 1;
+    : { top: searchBottom, bottom: cardOpen ? cardHeight : listHeight, left: 0, right: 0 };
+  const measured = isDesktop || (searchBottom > 0 && headerHeight > 0);
 
   return (
     <div
       ref={rootRef}
-      className="relative h-dvh overflow-hidden lg:grid lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]"
+      className="relative h-dvh overflow-hidden lg:grid lg:grid-cols-[380px_minmax(0,1fr)]"
     >
       {/* Karta */}
       <div className="absolute inset-0 z-0 lg:relative lg:order-2">
@@ -266,18 +289,23 @@ export function HomeShell({
             onMapClick={close}
             insets={insets}
             showZoom={isDesktop}
-            fitKey={items.map((i) => i.slug).join("|")}
+            fitKey={measured ? items.map((i) => i.slug).join("|") : ""}
           />
         )}
       </div>
 
       {/* Panel (desktop) / flytande sök + bottenark (mobil) */}
       <div className="max-lg:contents lg:order-1 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-line">
-        <div className="absolute inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-30 lg:relative lg:inset-auto lg:shrink-0 lg:px-8 lg:pt-6">
-          <div className="hidden lg:mb-6 lg:flex lg:items-center lg:justify-between">
+        <div
+          ref={searchRef}
+          className="absolute inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-30 lg:relative lg:inset-auto lg:shrink-0 lg:px-6 lg:pt-5"
+        >
+          <div className="hidden lg:mb-5 lg:flex lg:items-center lg:justify-between">
             <Logo />
-            <div className="flex items-center gap-2">
-              <PageSwitch current="/" />
+            <div className="flex items-center gap-1">
+              <Link href="/foretag" className="rounded-full px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-ink">
+                För företag
+              </Link>
               <SiteMenu current="/" />
             </div>
           </div>
@@ -296,7 +324,7 @@ export function HomeShell({
             // Kortet ersätter listan medan det är öppet.
             <div
               ref={cardRef}
-              className="shrink-0 touch-none px-4 pb-[max(16px,env(safe-area-inset-bottom))] select-none lg:touch-auto lg:px-8 lg:pt-6 lg:select-auto"
+              className="shrink-0 touch-none px-4 pb-[max(16px,env(safe-area-inset-bottom))] select-none lg:touch-auto lg:px-6 lg:pt-5 lg:select-auto"
               onPointerDown={startCardDrag}
             >
               <div className="mx-auto flex h-6 w-16 items-center justify-center lg:hidden" aria-hidden>
@@ -307,14 +335,15 @@ export function HomeShell({
           ) : (
             <>
               <div
-                className="shrink-0 touch-none px-4 pb-4 select-none lg:touch-auto lg:px-8 lg:pt-6"
+                ref={headerRef}
+                className="shrink-0 touch-none px-4 pb-[max(12px,env(safe-area-inset-bottom))] select-none lg:touch-auto lg:px-6 lg:pt-5 lg:pb-4"
                 onPointerDown={(e) => startDrag(e, false)}
               >
                 <button
                   type="button"
-                  onClick={() => setSnap(fullOpen ? 1 : SNAPS.length - 1)}
-                  aria-expanded={fullOpen}
-                  aria-label={fullOpen ? "Visa mer av kartan" : "Visa fler utövare"}
+                  onClick={() => setExpanded((v) => !v)}
+                  aria-expanded={expanded}
+                  aria-label={expanded ? "Visa mer av kartan" : "Visa alla utövare i listan"}
                   className="mx-auto flex h-6 w-16 items-center justify-center lg:hidden"
                 >
                   <span className="h-1 w-8 rounded-full bg-line" />
@@ -323,7 +352,7 @@ export function HomeShell({
               </div>
 
               <div
-                className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 lg:px-8 ${fullOpen ? "touch-pan-y" : "max-lg:touch-none"}`}
+                className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 lg:px-6 ${expanded ? "touch-pan-y" : "max-lg:touch-none"}`}
                 onPointerDown={(e) => startDrag(e, true)}
                 onClickCapture={onListClick}
                 onMouseOver={(e) => setHovered((e.target as Element).closest<HTMLElement>("[data-slug]")?.dataset.slug ?? null)}

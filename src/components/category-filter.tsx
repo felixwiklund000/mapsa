@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { CATEGORIES, type CategorySlug } from "@/lib/categories";
 import { filtersToHref, toggleCategoryHref, type Filters } from "@/lib/search";
-import { AreaChip } from "./area-chip";
 
-// Filter: område + kategorier (flerval). Chips 36 px, #F3F3F3, 14/600.
+// Filter: bara kategorier (flerval) – kartan visar redan området. Chips 36 px, #F3F3F3, 14/600.
 // Vald = svart. Scrollar i sidled på mobil (touch-pan-x låter bottenarket
 // dras uppåt/nedåt även med fingret på knapparna).
 
@@ -19,9 +18,6 @@ export function CategoryFilter({ filters, available }: { filters?: Filters; avai
   return (
     <nav aria-label="Filter">
       <ul className="scrollbar-none -mx-4 flex touch-pan-x gap-2 overflow-x-auto px-4 lg:-mx-8 lg:flex-wrap lg:px-8">
-        <li>
-          <AreaChip filters={filters} />
-        </li>
         <li>
           <Link
             href={allHref}

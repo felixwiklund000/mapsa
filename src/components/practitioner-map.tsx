@@ -276,7 +276,8 @@ export function PractitionerMap({
   // Visa alla ställen: första gången direkt, sedan kort och mjukt (~400 ms)
   // när filter eller sökning ändrar vilka ställen som visas.
   useEffect(() => {
-    if (!ready || fittedKeyRef.current === fitKey) return;
+    // Tom nyckel = inte redo än (t.ex. innan sökfältet och arket är uppmätta).
+    if (!ready || fitKey === "" || fittedKeyRef.current === fitKey) return;
     const first = fittedKeyRef.current === null;
     fittedKeyRef.current = fitKey;
     fitToPoints(!first);
