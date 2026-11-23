@@ -159,3 +159,27 @@ export function SiteMenu({
     </div>
   );
 }
+
+// Flikar "Kartan | För företag" – alltid synliga i sidhuvudet (desktop),
+// så att man ser direkt hur man tar sig mellan kartan och företagssidan.
+export function PageSwitch({ current, className = "" }: { current?: "/" | "/foretag"; className?: string }) {
+  return (
+    <nav aria-label="Sidor" className={`flex rounded-full bg-fill p-1 ${className}`}>
+      {MAIN.map((item) => {
+        const on = item.match === current;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={on ? "page" : undefined}
+            className={`flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+              on ? "bg-canvas text-ink shadow-[0_1px_4px_rgb(0_0_0/0.12)]" : "text-muted hover:text-ink"
+            }`}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}

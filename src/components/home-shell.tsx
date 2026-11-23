@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type R
 import Link from "next/link";
 import { animate, useMotionValue, useReducedMotion, useTransform, motion } from "motion/react";
 import { Logo } from "./site-header";
-import { SiteMenu } from "./site-menu";
+import { PageSwitch, SiteMenu } from "./site-menu";
+import { Map as MapIcon } from "lucide-react";
 import { PractitionerMap, type MapPoint } from "./practitioner-map";
 
 // Startsidans layout (se docs/design-spec.md).
@@ -40,6 +41,9 @@ export function HomeShell({
   const [isDesktop, setIsDesktop] = useState(false);
   const [snap, setSnap] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
+  // "Visa alla": syns när något är valt eller kartan flyttats; flyger tillbaka.
+  const [overviewKey, setOverviewKey] = useState(0);
+  const [moved, setMoved] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
@@ -89,8 +93,15 @@ export function HomeShell({
     (selectedRow as HTMLElement | null)?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
   }, [activeSlug, items, reduceMotion]);
 
+  function showAll() {
+    setSelected(null);
+    setMoved(false);
+    setOverviewKey((k) => k + 1);
+  }
+
   function select(slug: string) {
     setSelected(slug);
+    setMoved(true);
     if (!isDesktop && snap === 0) setSnap(1); // gör plats för raden och knappen
   }
 
@@ -176,7 +187,7 @@ export function HomeShell({
       className="relative h-dvh overflow-hidden lg:grid lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]"
     >
       {/* Karta */}
-      <div className="absolute inset-0 z-0 lg:static lg:order-2">
+      <div className="absolute inset-0 z-0 lg:relative lg:order-2">
         {rootHeight > 0 && (
           <PractitionerMap
             points={items}
@@ -185,7 +196,19 @@ export function HomeShell({
             onSelect={select}
             insets={insets}
             showZoom={isDesktop}
+            overviewKey={overviewKey}
+            onUserMove={() => setMoved(true)}
           />
+        )}
+        {moved && (
+          <button
+            type="button"
+            onClick={showAll}
+            className="pressable absolute top-[calc(max(16px,env(safe-area-inset-top))+72px)] left-1/2 z-10 flex h-10 -translate-x-1/2 items-center gap-2 rounded-full bg-canvas px-4 text-sm font-semibold shadow-float lg:top-4"
+          >
+            <MapIcon className="size-4" strokeWidth={2.25} aria-hidden />
+            Visa alla
+          </button>
         )}
       </div>
 
@@ -194,7 +217,10 @@ export function HomeShell({
         <div className="absolute inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-30 lg:relative lg:inset-auto lg:shrink-0 lg:px-8 lg:pt-6">
           <div className="hidden lg:mb-6 lg:flex lg:items-center lg:justify-between">
             <Logo />
-            <SiteMenu current="/" />
+            <div className="flex items-center gap-2">
+              <PageSwitch current="/" />
+              <SiteMenu current="/" />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">{search}</div>

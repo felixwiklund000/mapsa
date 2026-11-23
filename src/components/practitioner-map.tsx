@@ -51,6 +51,8 @@ export function PractitionerMap({
   onSelect,
   insets,
   showZoom,
+  overviewKey = 0,
+  onUserMove,
 }: {
   points: MapPoint[];
   selectedSlug: string | null;
@@ -59,21 +61,60 @@ export function PractitionerMap({
   onSelect: (slug: string) => void;
   insets: MapInsets;
   showZoom: boolean;
+  /** Öka värdet för att flyga tillbaka till översikten (alla ställen). */
+  overviewKey?: number;
+  /** Anropas när användaren själv drar/zoomar i kartan. */
+  onUserMove?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const libRef = useRef<MapLibreModule | null>(null);
   const markersRef = useRef(new Map<string, Marker>());
   const onSelectRef = useRef(onSelect);
+  const onUserMoveRef = useRef(onUserMove);
   const insetsRef = useRef(insets);
   const selectedRef = useRef(selectedSlug);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
+    onUserMoveRef.current = onUserMove;
     insetsRef.current = insets;
     selectedRef.current = selectedSlug;
   });
+
+  // Startvy/översikt: inzoomad där flest utövare finns (inte hela kommunen).
+  const overviewCamera = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || points.length === 0) return null;
+    const i = insetsRef.current;
+    let padding = { top: i.top + 48, bottom: i.bottom + 48, left: i.left + 48, right: i.right + 48 };
+    // Lämna alltid minst 40 % av kartan fri – annars "får inte översikten plats"
+    // (t.ex. på mobilen när bottenarket är halvt uppe).
+    const { clientWidth: w, clientHeight: h } = map.getContainer();
+    const sy = Math.min(1, (h * 0.6) / (padding.top + padding.bottom));
+    const sx = Math.min(1, (w * 0.6) / (padding.left + padding.right));
+    padding = { top: padding.top * sy, bottom: padding.bottom * sy, left: padding.left * sx, right: padding.right * sx };
+    const core = corePoints(points);
+    if (core.length === 1) return { center: [core[0].lng, core[0].lat] as [number, number], zoom: 15, pitch: PITCH, bearing: 0, padding };
+    // Räkna själv (Web Mercator, 512 px-rutor) – cameraForBounds lägger på
+    // kartans nuvarande marginal och "får inte plats" efter en flygning.
+    const mx = (lng: number) => (lng + 180) / 360;
+    const my = (lat: number) => (1 - Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) / Math.PI) / 2;
+    const xs = core.map((p) => mx(p.lng));
+    const ys = core.map((p) => my(p.lat));
+    const dx = Math.max(1e-9, Math.max(...xs) - Math.min(...xs));
+    const dy = Math.max(1e-9, Math.max(...ys) - Math.min(...ys));
+    const availW = Math.max(1, w - padding.left - padding.right);
+    const availH = Math.max(1, h - padding.top - padding.bottom);
+    const fitZoom = Math.min(15.5, Math.log2(Math.min(availW / (dx * 512), availH / (dy * 512))));
+    const minZoom = w < 640 ? MIN_START_ZOOM.mobile : MIN_START_ZOOM.desktop;
+    const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+    const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+    const lng = cx * 360 - 180;
+    const lat = (Math.atan(Math.sinh(Math.PI * (1 - 2 * cy))) * 180) / Math.PI;
+    return { center: [lng, lat] as [number, number], zoom: Math.max(fitZoom, minZoom), pitch: PITCH, bearing: 0, padding };
+  }, [points]);
 
   // Prislappar som skulle krocka visas som en liten tom lapp tills man zoomar in.
   // Vald först, sedan i listans ordning (utvalda överst).
@@ -205,21 +246,33 @@ export function PractitionerMap({
       markersRef.current.set(p.slug, marker);
     });
 
-    const i = insetsRef.current;
-    const padding = { top: i.top + 48, bottom: i.bottom + 48, left: i.left + 48, right: i.right + 48 };
-    // Startvy: inzoomad där flest utövare finns (inte hela kommunen).
-    const core = points.length > 0 ? corePoints(points) : [];
-    if (core.length === 1) {
-      map.jumpTo({ center: [core[0].lng, core[0].lat], zoom: 15, padding });
-    } else if (core.length > 1) {
-      const bounds = new lib.LngLatBounds();
-      core.forEach((p) => bounds.extend([p.lng, p.lat]));
-      const camera = map.cameraForBounds(bounds, { padding, maxZoom: 15.5 });
-      const minZoom = map.getContainer().clientWidth < 640 ? MIN_START_ZOOM.mobile : MIN_START_ZOOM.desktop;
-      if (camera) map.jumpTo({ ...camera, zoom: Math.max(camera.zoom ?? minZoom, minZoom), pitch: PITCH });
-    }
+    const camera = overviewCamera();
+    if (camera) map.jumpTo(camera);
     declutter();
-  }, [points, ready, declutter]);
+  }, [points, ready, declutter, overviewCamera]);
+
+  // "Visa alla": flyg tillbaka upp till översikten.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || overviewKey === 0) return;
+    const camera = overviewCamera();
+    if (!camera) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) map.jumpTo(camera);
+    else map.flyTo({ ...camera, duration: 1600, curve: 1.4, essential: true });
+  }, [overviewKey, ready, overviewCamera]);
+
+  // Säg till när användaren själv flyttar kartan (inte våra egna flygningar).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const onMove = (e: { originalEvent?: unknown }) => {
+      if (e.originalEvent) onUserMoveRef.current?.();
+    };
+    map.on("movestart", onMove);
+    return () => {
+      map.off("movestart", onMove);
+    };
+  }, [ready]);
 
   // Vald lapp: svart och lite större. Kartan flyger dit som en drönare
   // (lib/drone-flight.ts): svep in lågt mellan husen, stig sedan upp.

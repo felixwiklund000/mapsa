@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { connection } from "next/server";
 import { CategoryFilter } from "@/components/category-filter";
 import { HomeShell, type ShellItem } from "@/components/home-shell";
@@ -83,9 +84,21 @@ function ListHeader({
 
 function Footer() {
   return (
-    <p className="mt-8 border-t border-line py-6 text-sm text-muted">
-      Mapsa bokar inte åt dig. Vi länkar vidare till utövarens egen bokning. UF-företag i Karlskrona.
-    </p>
+    <div className="mt-8 border-t border-line py-6">
+      <Link
+        href="/foretag"
+        className="pressable flex items-center gap-4 rounded-2xl bg-ink p-5 text-canvas"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg font-semibold">Driver du ett företag?</span>
+          <span className="mt-1 block text-sm text-canvas/70">Syns på kartan med dina priser – första månaden gratis.</span>
+        </span>
+        <ArrowRight className="size-5 shrink-0" strokeWidth={2.25} aria-hidden />
+      </Link>
+      <p className="mt-5 text-sm text-muted">
+        Mapsa bokar inte åt dig. Vi länkar vidare till utövarens egen bokning. UF-företag i Karlskrona.
+      </p>
+    </div>
   );
 }
 
