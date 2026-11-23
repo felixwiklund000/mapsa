@@ -5,7 +5,7 @@ import { CategoryFilter } from "@/components/category-filter";
 import { HomeShell, type ShellItem } from "@/components/home-shell";
 import { formatPrice, lowestPrice, PractitionerCard, PractitionerRow } from "@/components/practitioner-row";
 import { SearchBar } from "@/components/search-bar";
-import { getCategory } from "@/lib/categories";
+import { getCategory, type CategorySlug } from "@/lib/categories";
 import { listPublishedPractitioners, type Practitioner } from "@/lib/db/practitioners";
 import { filterPractitioners, parseFilters, type Filters } from "@/lib/search";
 
@@ -31,7 +31,7 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["sea
   return (
     <HomeShell
       search={<SearchBar filters={filters} />}
-      header={<ListHeader filters={filters} count={results.length} />}
+      header={<ListHeader filters={filters} count={results.length} available={[...new Set(all.map((p) => p.category))]} />}
       list={
         results.length === 0 ? (
           <EmptyState filters={filters} all={all} />
@@ -62,12 +62,20 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["sea
   );
 }
 
-function ListHeader({ filters, count }: { filters?: Filters; count?: number }) {
+function ListHeader({
+  filters,
+  count,
+  available,
+}: {
+  filters?: Filters;
+  count?: number;
+  available?: CategorySlug[];
+}) {
   return (
     <>
       <h2 className="mt-2 text-lg font-semibold lg:mt-0">{count === undefined ? " " : `${count} utövare`}</h2>
       <div className="mt-4">
-        <CategoryFilter filters={filters} />
+        <CategoryFilter filters={filters} available={available} />
       </div>
     </>
   );

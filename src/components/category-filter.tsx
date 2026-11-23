@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CATEGORIES } from "@/lib/categories";
+import { CATEGORIES, type CategorySlug } from "@/lib/categories";
 import { filtersToHref, toggleCategoryHref, type Filters } from "@/lib/search";
 import { AreaChip } from "./area-chip";
 
@@ -11,7 +11,8 @@ const chip = "pressable inline-flex h-9 shrink-0 items-center rounded-lg px-3 te
 const off = "bg-fill text-ink hover:bg-line";
 const on = "bg-ink text-canvas";
 
-export function CategoryFilter({ filters }: { filters?: Filters }) {
+// available: kategorier som har minst en utövare – bara de visas (plus valda).
+export function CategoryFilter({ filters, available }: { filters?: Filters; available?: CategorySlug[] }) {
   const selected = filters?.categories ?? [];
   const allHref = filters ? filtersToHref({ ...filters, categories: [] }) : "/";
 
@@ -31,7 +32,7 @@ export function CategoryFilter({ filters }: { filters?: Filters }) {
             Alla
           </Link>
         </li>
-        {CATEGORIES.map((c) => {
+        {CATEGORIES.filter((c) => !available || available.includes(c.slug) || selected.includes(c.slug)).map((c) => {
           const active = selected.includes(c.slug);
           return (
             <li key={c.slug}>
