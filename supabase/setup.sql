@@ -54,9 +54,36 @@ CREATE TABLE IF NOT EXISTS images (
 
 CREATE INDEX IF NOT EXISTS idx_images_practitioner ON images (practitioner_id);
 
+-- Anmälningar från /foretag ("Lägg upp ditt företag"). Granskas av oss
+-- innan något publiceras. Skrivs bara av servern (server action).
+CREATE TABLE IF NOT EXISTS ansokningar (
+  id               integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  skapad           timestamptz NOT NULL DEFAULT now(),
+  foretagsnamn     text        NOT NULL,
+  kategori         text        NOT NULL CHECK (kategori IN
+                     ('massage','pt','frisor','kiropraktor','naprapat','skonhet')),
+  adress           text        NOT NULL,
+  lat              double precision NOT NULL,
+  lng              double precision NOT NULL,
+  tjanst           text        NOT NULL,
+  pris             integer     NOT NULL CHECK (pris >= 0),
+  bokningslank     text        NOT NULL,
+  kontaktnamn      text        NOT NULL,
+  mejl             text        NOT NULL,
+  telefon          text,
+  kalla            text,                                 -- ?ref= (t.ex. 'julmarknad')
+  status           text        NOT NULL DEFAULT 'ny' CHECK (status IN ('ny','godkand','nekad')),
+  samtycke_at      timestamptz NOT NULL                  -- när kryssrutan godkändes
+);
+
+CREATE INDEX IF NOT EXISTS idx_ansokningar_status ON ansokningar (status, skapad DESC);
+
 ALTER TABLE practitioners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE images ENABLE ROW LEVEL SECURITY;
+-- RLS utan regler: Supabases publika API kan varken läsa eller skriva.
+-- Servern skriver direkt via DATABASE_URL.
+ALTER TABLE ansokningar ENABLE ROW LEVEL SECURITY;
 
 BEGIN;
 

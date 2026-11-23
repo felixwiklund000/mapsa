@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Geist_Mono, Instrument_Serif } from "next/font/google";
 import { ArrowRight, CalendarCheck, Check, ChevronDown, ChevronRight, Smartphone } from "lucide-react";
 import { Logo } from "@/components/site-header";
 import { SiteMenu } from "@/components/site-menu";
 import { CityScene } from "@/components/landing/scenes";
 import { FeatureTabs } from "@/components/landing/feature-tabs";
 import { RadiatingLines } from "@/components/landing/radiating-lines";
+import { SignupSection } from "@/components/signup/signup-section";
+import { brandFonts } from "./fonts";
 
 // Landningssida för företag (utövare): vad Mapsa är, hur det funkar, priser.
 // Egen stil: sand + mörka paneler + orange accent, Instrument Serif i
 // rubriker, Geist Mono i små etiketter. Nivåer och priser enligt produktspecen.
 // Tonen: direkt, ärlig och vänlig – inga överord, inga påhittade siffror.
 
-const serif = Instrument_Serif({ weight: "400", subsets: ["latin"], variable: "--font-instrument-serif", display: "swap" });
-const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Mapsa för företag – syns på kartan i Blekinge",
@@ -22,9 +21,8 @@ export const metadata: Metadata = {
     "Mapsa visar din salong, klinik eller studio på kartan med dina priser. Kunden bokar via din egen bokning. Första månaden gratis.",
 };
 
-// Anmälningsformuläret är inte byggt än. Sätt en länk här när det finns
-// (t.ex. "/anmal" eller "mailto:…") så blir knapparna klickbara.
-const SIGNUP_HREF: string | null = null;
+// Anmälan finns längre ner på sidan (#anmal).
+const SIGNUP_HREF: string | null = "#anmal";
 
 const FLAME = "#ff5a1f";
 
@@ -110,12 +108,12 @@ function SignupButton() {
       </span>
     );
   }
-  return <FlameButton href={SIGNUP_HREF}>Kom igång gratis</FlameButton>;
+  return <FlameButton href={SIGNUP_HREF}>Lägg upp ditt företag</FlameButton>;
 }
 
 export default function ForetagPage() {
   return (
-    <div className={`${serif.variable} ${mono.variable} min-h-dvh bg-sand text-panel`}>
+    <div className={`${brandFonts} min-h-dvh bg-sand text-panel`}>
       {/* ---------- Header ---------- */}
       <header className="sticky top-0 z-30 bg-sand/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="relative mx-auto flex h-16 max-w-[1440px] items-center gap-4 px-4 sm:px-8">
@@ -134,7 +132,7 @@ export default function ForetagPage() {
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <a
-              href="#priser"
+              href="#anmal"
               className="pressable hidden h-11 items-center rounded-full bg-panel px-5 text-sm font-medium text-white sm:inline-flex"
             >
               Kom igång
@@ -167,7 +165,7 @@ export default function ForetagPage() {
                 egen bokning.
               </p>
               <div className="mt-9 flex items-center gap-5">
-                <FlameButton href="#priser">Kom igång gratis</FlameButton>
+                <FlameButton href="#anmal">Lägg upp ditt företag</FlameButton>
                 <Link href="/" className="text-base font-medium text-white/70 underline-offset-4 hover:text-white hover:underline">
                   Se kartan
                 </Link>
@@ -289,6 +287,19 @@ export default function ForetagPage() {
           </div>
         </section>
 
+        {/* ---------- Anmälan (akt 3): bygg din prislapp ---------- */}
+        <section id="anmal" className="mx-auto max-w-[1440px] scroll-mt-16 px-4 pt-24 pb-24 sm:px-8 sm:pt-32 sm:pb-32 lg:px-16">
+          <div className="max-w-2xl">
+            <p className={`${label} text-stone`}>Anmälan</p>
+            <h2 className="mt-5 font-serif text-headline text-balance">
+              Lägg upp ditt företag. <span className="text-stone">Det tar två minuter.</span>
+            </h2>
+          </div>
+          <div className="mt-12 sm:mt-16">
+            <SignupSection />
+          </div>
+        </section>
+
         {/* ---------- Priser ---------- */}
         <section id="priser" className="mx-auto max-w-[1440px] scroll-mt-16 px-4 py-24 sm:px-8 sm:py-32 lg:px-16">
           <div className="landing-reveal mx-auto max-w-2xl text-center">
@@ -372,7 +383,7 @@ export default function ForetagPage() {
               Du behåller din bokning – vi ser till att fler hittar dit.
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-5">
-              {SIGNUP_HREF ? <FlameButton href={SIGNUP_HREF}>Kom igång gratis</FlameButton> : <SignupButton />}
+              <SignupButton />
               <Link href="/" className="inline-flex items-center gap-1 text-base font-medium underline-offset-4 hover:underline">
                 Se kartan
                 <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />

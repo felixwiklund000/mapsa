@@ -53,6 +53,8 @@ export function PractitionerMap({
   showZoom,
   overviewKey = 0,
   onUserMove,
+  autoFit = true,
+  label = "Karta över utövare",
 }: {
   points: MapPoint[];
   selectedSlug: string | null;
@@ -65,6 +67,10 @@ export function PractitionerMap({
   overviewKey?: number;
   /** Anropas när användaren själv drar/zoomar i kartan. */
   onUserMove?: () => void;
+  /** Visa alla ställen när listan med ställen ändras (av för förhandsvisningen). */
+  autoFit?: boolean;
+  /** Tillgänglig beskrivning av kartan. */
+  label?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -74,6 +80,7 @@ export function PractitionerMap({
   const onUserMoveRef = useRef(onUserMove);
   const insetsRef = useRef(insets);
   const selectedRef = useRef(selectedSlug);
+  const pointsRef = useRef(points);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -81,11 +88,13 @@ export function PractitionerMap({
     onUserMoveRef.current = onUserMove;
     insetsRef.current = insets;
     selectedRef.current = selectedSlug;
+    pointsRef.current = points;
   });
 
   // Startvy/översikt: inzoomad där flest utövare finns (inte hela kommunen).
   const overviewCamera = useCallback(() => {
     const map = mapRef.current;
+    const points = pointsRef.current;
     if (!map || points.length === 0) return null;
     const i = insetsRef.current;
     let padding = { top: i.top + 48, bottom: i.bottom + 48, left: i.left + 48, right: i.right + 48 };
@@ -114,7 +123,7 @@ export function PractitionerMap({
     const lng = cx * 360 - 180;
     const lat = (Math.atan(Math.sinh(Math.PI * (1 - 2 * cy))) * 180) / Math.PI;
     return { center: [lng, lat] as [number, number], zoom: Math.max(fitZoom, minZoom), pitch: PITCH, bearing: 0, padding };
-  }, [points]);
+  }, []);
 
   // Prislappar som skulle krocka visas som en liten tom lapp tills man zoomar in.
   // Vald först, sedan i listans ordning (utvalda överst).
@@ -220,15 +229,31 @@ export function PractitionerMap({
     if (!highlightSlug) declutter();
   }, [highlightSlug, selectedSlug, points, declutter]);
 
-  // Rita prislapparna när resultaten ändras och visa alla.
+  // Prislapparna: skapa nya, uppdatera befintliga på plats (text och läge –
+  // pop-animationen spelas inte om), ta bort de som inte finns längre.
   useEffect(() => {
     const lib = libRef.current;
     const map = mapRef.current;
     if (!ready || !lib || !map) return;
 
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current.clear();
+    const wanted = new Set(points.map((p) => p.slug));
+    for (const [slug, marker] of markersRef.current) {
+      if (!wanted.has(slug)) {
+        marker.remove();
+        markersRef.current.delete(slug);
+      }
+    }
     points.forEach((p, index) => {
+      const existing = markersRef.current.get(p.slug);
+      if (existing) {
+        const el = existing.getElement();
+        el.setAttribute("aria-label", `${p.name}, från ${p.label}`);
+        const pin = el.querySelector(".mapsa-pin");
+        if (pin && pin.textContent !== p.label) pin.textContent = p.label;
+        const at = existing.getLngLat();
+        if (at.lng !== p.lng || at.lat !== p.lat) existing.setLngLat([p.lng, p.lat]);
+        return;
+      }
       const el = document.createElement("button");
       el.type = "button";
       el.className = "mapsa-marker";
@@ -245,11 +270,18 @@ export function PractitionerMap({
       const marker = new lib.Marker({ element: el, anchor: "center" }).setLngLat([p.lng, p.lat]).addTo(map);
       markersRef.current.set(p.slug, marker);
     });
+    declutter();
+  }, [points, ready, declutter]);
 
+  // Visa alla ställen när *vilka* ställen som visas ändras (t.ex. nytt filter).
+  const slugKey = points.map((p) => p.slug).join("|");
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !autoFit) return;
     const camera = overviewCamera();
     if (camera) map.jumpTo(camera);
     declutter();
-  }, [points, ready, declutter, overviewCamera]);
+  }, [slugKey, ready, autoFit, overviewCamera, declutter]);
 
   // "Visa alla": flyg tillbaka upp till översikten.
   useEffect(() => {
@@ -274,27 +306,32 @@ export function PractitionerMap({
     };
   }, [ready]);
 
-  // Vald lapp: svart och lite större. Kartan flyger dit som en drönare
-  // (lib/drone-flight.ts): svep in lågt mellan husen, stig sedan upp.
+  // Vald lapp: svart och lite större.
   useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map) return;
+    if (!ready) return;
     for (const [slug, marker] of markersRef.current) {
       marker.getElement().classList.toggle("is-active", slug === selectedSlug);
     }
     declutter();
-    const point = points.find((p) => p.slug === selectedSlug);
-    if (!point) return;
+  }, [selectedSlug, ready, points, declutter]);
 
+  // Kartan flyger till vald lapp som en drönare (lib/drone-flight.ts). Bara när
+  // valet eller dess läge ändras – inte när texten på lappen ändras.
+  const selected = points.find((p) => p.slug === selectedSlug);
+  const selLng = selected?.lng;
+  const selLat = selected?.lat;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || selLng === undefined || selLat === undefined) return;
     const i = insetsRef.current;
     const padding = { top: i.top, bottom: i.bottom, left: i.left, right: i.right };
-    const center: [number, number] = [point.lng, point.lat];
+    const center: [number, number] = [selLng, selLat];
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       map.jumpTo({ center, zoom: Math.max(map.getZoom(), 15), pitch: PITCH, padding });
       return;
     }
     return droneFlight(map, center, padding);
-  }, [selectedSlug, ready, points, declutter]);
+  }, [selectedSlug, selLng, selLat, ready]);
 
-  return <div ref={containerRef} role="region" aria-label="Karta över utövare" className="h-full w-full" />;
+  return <div ref={containerRef} role="region" aria-label={label} className="h-full w-full" />;
 }

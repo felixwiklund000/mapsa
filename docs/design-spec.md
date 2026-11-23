@@ -1,5 +1,10 @@
 # Mapsa – designspec
 
+> **Ny riktning:** `docs/hemsida-brief.md` (avsnitt 7) går före den här specen. Landningssidans
+> tokens (sand, nära-svart, orange `flame`, Instrument Serif i rubriker) ska användas även i
+> kartan och appen. Delarna nedan om "inga accentfärger" och svarta nålar ersätts steg för steg
+> (se planen: steg 3 gör prislapparna orange).
+
 Inspirerad av Ubers app. Koden får bara använda värdena i det här dokumentet.
 Alla tokens finns i `src/app/design-system.css`.
 
