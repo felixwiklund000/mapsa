@@ -66,10 +66,16 @@ Inga kategorifärger, inga färgprickar, ingen accentfärg.
 
 ## Kartan
 
-- OpenStreetMap-kartbilder i gråskala (ljust) och inverterade (mörkt), med attribution.
-  (CARTO var specens val men kräver numera API-nyckel.)
-- Nålar: svarta pillor med pris i vit 12 px / 600, höjd 24 px. Vald nål: vit med svart text och lite större.
-- Klick på en rad i listan → kartan glider mjukt till nålen (`flyTo`) och nålen blir vald.
+- MapLibre GL med kartdata från OpenFreeMap (gratis, ingen API-nyckel) och egen stil i
+  `src/lib/map-style.ts`: ljusgrå mark, vita vägar med tunn grå kant, mjukt blått vatten,
+  dämpat grönt, grå byggnader. Mörkt läge har en egen mörk variant.
+- Låga byggnader i 3D från zoom 14 (verklig höjd, max 24 m, skalad till 60 %), kartan lutar 45°.
+  Ingen rotation.
+- Få etiketter: stadsdelar i versaler 12 px, gatunamn 12 px från zoom 14.
+- Prislappar som Airbnb (ändrat på önskemål): vit, helt rund, 28 px hög, 14 px / 600 svart text,
+  mjuk skugga. Vald: svart med vit text, lite större. Lappar som krockar blir små tomma lappar.
+  Kartans färger och lapparnas skugga är undantag från färg- och skuggreglerna ovan.
+- Klick på en rad i listan → kartan glider mjukt till lappen (`flyTo`) och lappen blir vald.
 
 ## Profilsidan
 

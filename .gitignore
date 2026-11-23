@@ -44,3 +44,6 @@ next-env.d.ts
 
 # originalfoton (se docs/testdata-bilder.md)
 /bilder-original/
+
+# kopieras från node_modules vid dev/build
+/public/maplibre-gl-worker.js
