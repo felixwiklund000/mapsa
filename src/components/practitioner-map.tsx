@@ -2,7 +2,7 @@
 
 import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { LayerGroup, Map as LeafletMap, Marker, TileLayer } from "leaflet";
+import type { LayerGroup, Map as LeafletMap, Marker } from "leaflet";
 import { KARLSKRONA_CENTER } from "@/lib/areas";
 
 export type MapPoint = {
@@ -17,13 +17,11 @@ export type MapPoint = {
 /** Hur mycket av kartan som täcks av sökfält och bottenark (px). */
 export type MapInsets = { top: number; bottom: number; left: number; right: number };
 
-// Kartbilder: CARTO Positron (ljust) / Dark Matter (mörkt).
-const TILES = {
-  light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-};
-const ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+// Kartbilder: OpenStreetMap (gratis, ingen API-nyckel). Görs svartvita med
+// CSS i design-system.css (.leaflet-tile-pane), inverterade i mörkt läge.
+// (CARTO kräver numera API-nyckel och visade "API KEY REQUIRED".)
+const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 export function PractitionerMap({
   points,
@@ -40,7 +38,6 @@ export function PractitionerMap({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LeafletMap | null>(null);
-  const tilesRef = useRef<TileLayer | null>(null);
   const layerRef = useRef<LayerGroup | null>(null);
   const markersRef = useRef(new Map<string, Marker>());
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
@@ -78,8 +75,6 @@ export function PractitionerMap({
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
     const markers = markersRef.current;
-    const dark = window.matchMedia("(prefers-color-scheme: dark)");
-    const onScheme = () => tilesRef.current?.setUrl(dark.matches ? TILES.dark : TILES.light);
 
     import("leaflet").then((L) => {
       const el = containerRef.current;
@@ -89,14 +84,9 @@ export function PractitionerMap({
         [KARLSKRONA_CENTER.lat, KARLSKRONA_CENTER.lng],
         12,
       );
-      tilesRef.current = L.tileLayer(dark.matches ? TILES.dark : TILES.light, {
-        maxZoom: 19,
-        subdomains: "abcd",
-        attribution: ATTRIBUTION,
-      }).addTo(map);
+      L.tileLayer(TILE_URL, { maxZoom: 19, attribution: ATTRIBUTION }).addTo(map);
       layerRef.current = L.layerGroup().addTo(map);
       mapRef.current = map;
-      dark.addEventListener("change", onScheme);
       map.on("zoomend moveend", () => declutter());
       resizeObserver = new ResizeObserver(() => map.invalidateSize());
       resizeObserver.observe(el);
@@ -105,12 +95,10 @@ export function PractitionerMap({
 
     return () => {
       cancelled = true;
-      dark.removeEventListener("change", onScheme);
       resizeObserver?.disconnect();
       mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
-      tilesRef.current = null;
       markers.clear();
       setReady(false);
     };

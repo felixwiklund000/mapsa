@@ -183,6 +183,15 @@ body {
   font-family: var(--font-sans);
   background: var(--fill);
 }
+/* Kartbilderna i svartvitt (ljust) och inverterade (mörkt). */
+.leaflet-tile-pane {
+  filter: grayscale(1) contrast(0.9) brightness(1.05);
+}
+@media (prefers-color-scheme: dark) {
+  .leaflet-tile-pane {
+    filter: grayscale(1) invert(1) contrast(0.85) brightness(0.9);
+  }
+}
 .leaflet-bar.leaflet-bar {
   border: 1px solid var(--line);
   border-radius: 8px;

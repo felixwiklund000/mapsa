@@ -66,7 +66,8 @@ Inga kategorifärger, inga färgprickar, ingen accentfärg.
 
 ## Kartan
 
-- CARTO Positron (ljust) / Dark Matter (mörkt), med attribution.
+- OpenStreetMap-kartbilder i gråskala (ljust) och inverterade (mörkt), med attribution.
+  (CARTO var specens val men kräver numera API-nyckel.)
 - Nålar: svarta pillor med pris i vit 12 px / 600, höjd 24 px. Vald nål: vit med svart text och lite större.
 - Klick på en rad i listan → kartan glider mjukt till nålen (`flyTo`) och nålen blir vald.
 
