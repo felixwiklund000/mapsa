@@ -26,10 +26,7 @@ export const viewport: Viewport = {
   // Låter sidan gå ut till skärmkanten på telefoner med notch; marginaler
   // för notch och hemknapp läggs på där det behövs.
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

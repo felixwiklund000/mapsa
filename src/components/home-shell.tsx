@@ -39,6 +39,7 @@ export function HomeShell({
   const [isDesktop, setIsDesktop] = useState(false);
   const [snap, setSnap] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
   const sheetHeight = useMotionValue(0);
@@ -81,7 +82,8 @@ export function HomeShell({
     listRef.current?.querySelectorAll<HTMLElement>("[data-slug]").forEach((row) => {
       const on = row.dataset.slug === activeSlug;
       row.classList.toggle("is-selected", on);
-      if (on) selectedRow = row;
+      // Listan finns både som rader (mobil) och kort (desktop) – välj den som syns.
+      if (on && row.offsetParent !== null) selectedRow = row;
     });
     (selectedRow as HTMLElement | null)?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
   }, [activeSlug, items, reduceMotion]);
@@ -168,13 +170,17 @@ export function HomeShell({
   const fullOpen = snap === SNAPS.length - 1;
 
   return (
-    <div ref={rootRef} className="relative h-dvh overflow-hidden lg:grid lg:grid-cols-[440px_minmax(0,1fr)]">
+    <div
+      ref={rootRef}
+      className="relative h-dvh overflow-hidden lg:grid lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]"
+    >
       {/* Karta */}
       <div className="absolute inset-0 z-0 lg:static lg:order-2">
         {rootHeight > 0 && (
           <PractitionerMap
             points={items}
             selectedSlug={activeSlug}
+            highlightSlug={isDesktop ? hovered : null}
             onSelect={select}
             insets={insets}
             showZoom={isDesktop}
@@ -217,6 +223,8 @@ export function HomeShell({
             className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 lg:px-8 ${fullOpen ? "touch-pan-y" : "max-lg:touch-none"}`}
             onPointerDown={(e) => startDrag(e, true)}
             onClickCapture={onListClick}
+            onMouseOver={(e) => setHovered((e.target as Element).closest<HTMLElement>("[data-slug]")?.dataset.slug ?? null)}
+            onMouseLeave={() => setHovered(null)}
           >
             {list}
             {footer}

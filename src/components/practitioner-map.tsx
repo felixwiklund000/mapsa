@@ -27,12 +27,15 @@ const PITCH = 45; // lätt lutning så att byggnaderna syns i 3D
 export function PractitionerMap({
   points,
   selectedSlug,
+  highlightSlug = null,
   onSelect,
   insets,
   showZoom,
 }: {
   points: MapPoint[];
   selectedSlug: string | null;
+  /** Lapp som markeras utan att kartan flyttar sig (t.ex. kortet man pekar på). */
+  highlightSlug?: string | null;
   onSelect: (slug: string) => void;
   insets: MapInsets;
   showZoom: boolean;
@@ -80,8 +83,6 @@ export function PractitionerMap({
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
     const markers = markersRef.current;
-    const dark = window.matchMedia("(prefers-color-scheme: dark)");
-    const onScheme = () => mapRef.current?.setStyle(mapStyle(dark.matches));
 
     import("maplibre-gl").then((lib) => {
       const el = containerRef.current;
@@ -93,7 +94,7 @@ export function PractitionerMap({
       try {
         map = new lib.Map({
           container: el,
-          style: mapStyle(dark.matches),
+          style: mapStyle(),
           center: [KARLSKRONA_CENTER.lng, KARLSKRONA_CENTER.lat],
           zoom: 12,
           pitch: PITCH,
@@ -111,7 +112,6 @@ export function PractitionerMap({
       map.keyboard.disableRotation();
       map.on("moveend", declutter);
       mapRef.current = map;
-      dark.addEventListener("change", onScheme);
       resizeObserver = new ResizeObserver(() => map.resize());
       resizeObserver.observe(el);
       setReady(true);
@@ -119,7 +119,6 @@ export function PractitionerMap({
 
     return () => {
       cancelled = true;
-      dark.removeEventListener("change", onScheme);
       resizeObserver?.disconnect();
       markers.forEach((m) => m.remove());
       markers.clear();
@@ -140,6 +139,20 @@ export function PractitionerMap({
       map.removeControl(control);
     };
   }, [ready, showZoom]);
+
+  // Lappen för kortet man pekar på blir svart (som hos Airbnb), utan att kartan rör sig.
+  useEffect(() => {
+    for (const [slug, marker] of markersRef.current) {
+      const el = marker.getElement();
+      const on = slug === highlightSlug && slug !== selectedSlug;
+      el.classList.toggle("is-hover", on);
+      if (on) {
+        el.querySelector(".mapsa-pin")?.classList.remove("is-dot"); // visa alltid priset
+        el.style.zIndex = "4";
+      }
+    }
+    if (!highlightSlug) declutter();
+  }, [highlightSlug, selectedSlug, points, declutter]);
 
   // Rita prislapparna när resultaten ändras och visa alla.
   useEffect(() => {

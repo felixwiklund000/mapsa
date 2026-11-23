@@ -14,16 +14,7 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --canvas: #000000;
-    --ink: #ffffff;
-    --fill: #1c1c1c;
-    --line: #2a2a2a;
-    --muted: #949494; /* inverterad #6b6b6b */
-    color-scheme: dark;
-  }
-}
+/* Mörkt läge är avstängt tills vidare: appen är alltid ljus (vitt är huvudidentiteten). */
 
 /* ---------- Nollställ Tailwinds standardskalor ---------- */
 @theme {
@@ -230,17 +221,11 @@ body {
 .mapsa-marker:hover .mapsa-pin {
   transform: scale(1.08);
 }
+.mapsa-marker.is-hover .mapsa-pin,
 .mapsa-marker.is-active .mapsa-pin {
   background: #000000;
   color: #ffffff;
   transform: scale(1.12);
-}
-@media (prefers-color-scheme: dark) {
-  .mapsa-marker.is-active .mapsa-pin {
-    box-shadow:
-      0 0 0 1px rgb(255 255 255 / 0.6),
-      0 2px 6px rgb(0 0 0 / 0.5);
-  }
 }
 /* Krockar lappen med en annan visas en liten tom lapp (som Airbnb). */
 .mapsa-pin.is-dot {

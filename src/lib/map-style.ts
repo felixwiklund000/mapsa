@@ -1,6 +1,6 @@
 // Kartstil för MapLibre, inspirerad av Ubers och Airbnbs kartor:
 // lugn ljusgrå mark, vita vägar, mjukt blått vatten, dämpat grönt och låga
-// grå byggnader i 3D. Kartdata: OpenFreeMap (fritt, ingen API-nyckel),
+// grå byggnader i 3D. Alltid ljus. Kartdata: OpenFreeMap (fritt, ingen API-nyckel),
 // schema OpenMapTiles. Se docs/design-spec.md, avsnittet Kartan.
 
 import type { StyleSpecification } from "maplibre-gl";
@@ -26,36 +26,22 @@ type Palette = {
   waterLabel: string;
 };
 
+// Ljus och mjuk, i Airbnb/Uber-anda: ljus mark med en aning grönt,
+// ljusgröna parker, ljusblått vatten, vita vägar, ljusgrå byggnader.
 const LIGHT: Palette = {
-  land: "#efefed",
-  landAlt: "#ebebe9",
-  green: "#d4e8cf",
-  wood: "#cbe2c5",
-  water: "#b8d6ea",
+  land: "#f2f3ef",
+  landAlt: "#eef0eb",
+  green: "#d8ecc9",
+  wood: "#cfe6bd",
+  water: "#b4dcf7",
   road: "#ffffff",
-  roadCasing: "#dcdcdc",
-  path: "#e4e4e2",
-  building: "#dfdfe2",
-  buildingTop: "#d9d9dd",
+  roadCasing: "#e2e3df",
+  path: "#e8e9e5",
+  building: "#e6e6e4",
+  buildingTop: "#e9e9e7",
   label: "#6b6b6b",
   labelHalo: "#ffffff",
-  waterLabel: "#5d86a6",
-};
-
-const DARK: Palette = {
-  land: "#1b1b1d",
-  landAlt: "#1e1e20",
-  green: "#1e2a21",
-  wood: "#1c271f",
-  water: "#1b2a36",
-  road: "#38383c",
-  roadCasing: "#2a2a2e",
-  path: "#2c2c30",
-  building: "#2b2b2f",
-  buildingTop: "#303035",
-  label: "#949494",
-  labelHalo: "#000000",
-  waterLabel: "#6f93ad",
+  waterLabel: "#4a86b5",
 };
 
 // Vägbredd (px) som växer med zoomnivån.
@@ -73,14 +59,14 @@ const casing = (w: [number, number][]) => w.map(([z, v]) => [z, v + (z >= 13 ? 2
 
 const isClass = (classes: string[]) => ["match", ["get", "class"], classes, true, false] as unknown as boolean;
 
-export function mapStyle(dark: boolean): StyleSpecification {
-  const c = dark ? DARK : LIGHT;
+export function mapStyle(): StyleSpecification {
+  const c = LIGHT;
   return {
     version: 8,
     glyphs: GLYPHS,
     sources: { omt: { type: "vector", url: SOURCE } },
     // Mjukt ljus på byggnaderna (svag skugga på ena sidan).
-    light: { anchor: "viewport", color: "#ffffff", intensity: dark ? 0.2 : 0.35, position: [1.3, 210, 35] },
+    light: { anchor: "viewport", color: "#ffffff", intensity: 0.3, position: [1.3, 210, 35] },
     layers: [
       { id: "land", type: "background", paint: { "background-color": c.land } },
       {

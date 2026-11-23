@@ -31,13 +31,14 @@ Skärmdumparna är från en iPhone (1179 px bred = 393 pt, 3 px per pt).
 
 | Token | Ljust | Mörkt |
 | --- | --- | --- |
-| `canvas` (bakgrund) | `#FFFFFF` | `#000000` |
+| `canvas` (bakgrund) | `#FFFFFF` | (mörkt läge avstängt) |
 | `ink` (text, primärknapp, nålar) | `#000000` | `#FFFFFF` |
 | `fill` (chips, sekundärknappar, ytor) | `#F3F3F3` | `#1C1C1C` |
 | `line` (linjer) | `#E8E8E8` | `#2A2A2A` |
 | `muted` (sekundärtext) | `#6B6B6B` | `#949494` (inverterad `#6B6B6B`) |
 
-Inga kategorifärger, inga färgprickar, ingen accentfärg.
+Inga kategorifärger, inga färgprickar, ingen accentfärg. Appen är alltid ljus – mörkt läge är avstängt
+tills vidare (önskemål: färgerna var för mörka).
 
 ## Mått
 
@@ -62,13 +63,15 @@ Inga kategorifärger, inga färgprickar, ingen accentfärg.
 
 ## Startsidan, desktop
 
-- Panel till vänster (logga, sök, rubrik, chips, lista), karta till höger.
+- Panel till vänster (ca 55 %: logga, sök, rubrik, chips, kortlista), karta till höger.
+- Kortlista som Airbnb: två kolumner, bild 4:3 med 12 px radie (undantag från 8 px), namn 16/600,
+  "Massage · Trossö" 14 grå, "fr. 395 kr" 16/600. Pekar man på ett kort blir lappen på kartan svart.
 
 ## Kartan
 
 - MapLibre GL med kartdata från OpenFreeMap (gratis, ingen API-nyckel) och egen stil i
   `src/lib/map-style.ts`: ljusgrå mark, vita vägar med tunn grå kant, mjukt blått vatten,
-  dämpat grönt, grå byggnader. Mörkt läge har en egen mörk variant.
+  dämpat grönt, grå byggnader. Alltid ljus.
 - Låga byggnader i 3D från zoom 14 (verklig höjd, max 24 m, skalad till 60 %), kartan lutar 45°.
   Ingen rotation.
 - Få etiketter: stadsdelar i versaler 12 px, gatunamn 12 px från zoom 14.
