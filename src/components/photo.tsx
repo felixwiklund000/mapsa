@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { CategoryTile } from "./category-icon";
 
-// Foto av en utövare. Saknas bilden (eller går inte att ladda) visas en tom
-// grå yta – aldrig en bokstav, ikon eller trasig bild.
+// Foto av en utövare. Saknas bilden (eller går inte att ladda) visas
+// kategorins ikon på en färgad bakgrund – aldrig en grå ruta eller trasig bild.
 export function Photo({
   src,
   alt,
+  category,
   className = "",
   eager = false,
 }: {
   src?: string | null;
   alt: string;
+  /** Kategori-slug – styr ikonen och färgen när bild saknas. */
+  category?: string;
   className?: string;
   eager?: boolean;
 }) {
@@ -25,7 +29,7 @@ export function Photo({
     if (img && img.complete && img.naturalWidth === 0) setFailed(true);
   }, []);
 
-  if (!src || failed) return <div role="img" aria-label={alt} className={`bg-fill ${className}`} />;
+  if (!src || failed) return <CategoryTile category={category} label={alt} className={className} />;
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- lokala/uppladdade foton
@@ -35,7 +39,7 @@ export function Photo({
       alt={alt}
       loading={eager ? "eager" : "lazy"}
       onError={() => setFailed(true)}
-      className={`bg-fill object-cover text-transparent ${className}`}
+      className={`bg-[#f2efe8] object-cover text-transparent ${className}`}
     />
   );
 }

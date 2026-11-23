@@ -23,6 +23,10 @@ type MapLibreModule = typeof import("maplibre-gl");
 // Luft runt prislapparna när kartan visar alla: marginal + en halv prislapp.
 const FIT_MARGIN = 32 + 22;
 const FIT_MS = 400;
+// Vald prislapp ska synas: så här mycket luft (px) mot sökfält, kort och kanter.
+const PIN_HALF_W = 48;
+const PIN_HALF_H = 22;
+const PAN_MS = 300;
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -34,6 +38,7 @@ export function PractitionerMap({
   selectedSlug,
   highlightSlug = null,
   onSelect,
+  onMapClick,
   insets,
   showZoom,
   fitKey,
@@ -44,6 +49,8 @@ export function PractitionerMap({
   /** Lapp som markeras utan att kartan flyttar sig (t.ex. raden man pekar på). */
   highlightSlug?: string | null;
   onSelect: (slug: string) => void;
+  /** Tryck på själva kartan (inte på en prislapp), t.ex. för att stänga kortet. */
+  onMapClick?: () => void;
   insets: MapInsets;
   showZoom: boolean;
   /** När värdet ändras visar kartan alla ställen (första gången utan animation). */
@@ -56,6 +63,7 @@ export function PractitionerMap({
   const libRef = useRef<MapLibreModule | null>(null);
   const markersRef = useRef(new Map<string, Marker>());
   const onSelectRef = useRef(onSelect);
+  const onMapClickRef = useRef(onMapClick);
   const insetsRef = useRef(insets);
   const selectedRef = useRef(selectedSlug);
   const pointsRef = useRef(points);
@@ -64,6 +72,7 @@ export function PractitionerMap({
 
   useEffect(() => {
     onSelectRef.current = onSelect;
+    onMapClickRef.current = onMapClick;
     insetsRef.current = insets;
     selectedRef.current = selectedSlug;
     pointsRef.current = points;
@@ -106,8 +115,8 @@ export function PractitionerMap({
       const pin = el.querySelector<HTMLElement>(".mapsa-pin");
       if (!pin) continue;
       pin.classList.remove("is-dot");
-      // Mät knappen runt lappen: den har full storlek även medan lappen poppar fram.
-      const r = el.getBoundingClientRect();
+      // Mät själva lappen (knappen runt den är en 44 px tryckyta).
+      const r = pin.getBoundingClientRect();
       const hit = placed.some((p) => r.left < p.right + 2 && r.right > p.left - 2 && r.top < p.bottom + 2 && r.bottom > p.top - 2);
       const selected = slug === selectedRef.current;
       if (hit && !selected) pin.classList.add("is-dot");
@@ -155,6 +164,12 @@ export function PractitionerMap({
       map.touchZoomRotate.disableRotation();
       map.keyboard.disableRotation();
       map.on("moveend", declutter);
+      // Tryck på kartan (inte på en prislapp – de ligger i samma behållare).
+      map.on("click", (e) => {
+        const target = e.originalEvent?.target as Element | null;
+        if (target?.closest?.(".mapsa-marker")) return;
+        onMapClickRef.current?.();
+      });
       mapRef.current = map;
       // Bara under utveckling: gör kartan åtkomlig för felsökning i konsolen.
       if (process.env.NODE_ENV !== "production") (window as unknown as { __mapsaMap?: MapLibreMap }).__mapsaMap = map;
@@ -275,6 +290,30 @@ export function PractitionerMap({
     }
     declutter();
   }, [selectedSlug, ready, points, declutter]);
+
+  // Vald prislapp ska synas. Ingen zoom, ingen flygning – bara ett kort
+  // panBy om lappen annars hamnar bakom sökfältet eller kortet.
+  const selected = points.find((p) => p.slug === selectedSlug);
+  const selLng = selected?.lng;
+  const selLat = selected?.lat;
+  const { top: insetTop, bottom: insetBottom, left: insetLeft, right: insetRight } = insets;
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || selLng === undefined || selLat === undefined) return;
+    const raf = requestAnimationFrame(() => {
+      const pt = map.project([selLng, selLat]);
+      const { clientWidth: w, clientHeight: h } = map.getContainer();
+      const minX = insetLeft + PIN_HALF_W;
+      const maxX = w - insetRight - PIN_HALF_W;
+      const minY = insetTop + PIN_HALF_H;
+      const maxY = h - insetBottom - PIN_HALF_H;
+      if (minX >= maxX || minY >= maxY) return; // ingen synlig yta att flytta till
+      const dx = pt.x < minX ? pt.x - minX : pt.x > maxX ? pt.x - maxX : 0;
+      const dy = pt.y < minY ? pt.y - minY : pt.y > maxY ? pt.y - maxY : 0;
+      if (dx !== 0 || dy !== 0) map.panBy([dx, dy], { duration: reducedMotion() ? 0 : PAN_MS, essential: true });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [ready, selectedSlug, selLng, selLat, insetTop, insetBottom, insetLeft, insetRight]);
 
   return <div ref={containerRef} role="region" aria-label={label} className="h-full w-full" />;
 }

@@ -22,7 +22,7 @@ export function PractitionerRow({ practitioner: p }: { practitioner: Practitione
       data-slug={p.slug}
       className="pressable -mx-2 flex h-20 items-center gap-4 rounded-lg px-2 hover:bg-fill [&.is-selected]:bg-fill [&.is-selected]:ring-2 [&.is-selected]:ring-ink [&.is-selected]:ring-inset"
     >
-      <Photo src={p.images[0]?.path} alt={p.name} className="size-16 shrink-0 rounded-lg" />
+      <Photo src={p.images[0]?.path} alt={p.name} category={p.category} className="size-16 shrink-0 rounded-lg" />
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">{p.name}</p>
         <p className="truncate text-sm text-muted">
@@ -48,6 +48,7 @@ export function PractitionerCard({ practitioner: p }: { practitioner: Practition
         <Photo
           src={p.images[0]?.path}
           alt={p.name}
+          category={p.category}
           className="aspect-[4/3] w-full transition-transform duration-200 ease-out group-hover:scale-[1.03]"
         />
       </div>

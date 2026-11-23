@@ -188,10 +188,15 @@ body {
   font-size: 12px;
 }
 
-/* Prislapp i Airbnb-stil: vit, helt rund, mjuk skugga, svart text.
-   Vald: svart med vit text, lite större. Poppar fram när kartan laddas. */
+/* Prislapp: liten pill i accentfärgen ("250 kr"). Vald (eller raden man pekar
+   på): mörk och något större. Knappen runt lappen är en tryckyta på minst
+   44×44 px. Poppar fram en gång när kartan visar lapparna. */
 .mapsa-marker {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: none;
@@ -200,32 +205,33 @@ body {
 .mapsa-pin {
   display: inline-flex;
   align-items: center;
-  height: 28px;
-  padding: 0 10px;
+  height: 26px;
+  padding: 0 9px;
   border-radius: 9999px;
-  background: #ffffff;
-  color: #000000;
-  font-size: 14px;
+  background: #ff5a1f;
+  color: #ffffff;
+  font-size: 13px;
   line-height: 1;
   font-weight: 600;
   white-space: nowrap;
   box-shadow:
-    0 0 0 1px rgb(0 0 0 / 0.06),
-    0 2px 6px rgb(0 0 0 / 0.18);
+    0 0 0 1.5px #ffffff,
+    0 1px 4px rgb(0 0 0 / 0.18);
   transition:
-    transform 200ms ease-out,
-    background-color 200ms ease-out,
-    color 200ms ease-out;
-  animation: mapsa-pop 300ms cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards;
+    transform 150ms ease-out,
+    background-color 150ms ease-out;
+  animation: mapsa-pop 250ms ease-out backwards;
 }
 .mapsa-marker:hover .mapsa-pin {
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
 .mapsa-marker.is-hover .mapsa-pin,
 .mapsa-marker.is-active .mapsa-pin {
-  background: #000000;
-  color: #ffffff;
+  background: #141312;
   transform: scale(1.12);
+}
+.mapsa-marker.is-active {
+  z-index: 5 !important;
 }
 /* Krockar lappen med en annan visas en liten tom lapp (som Airbnb). */
 .mapsa-pin.is-dot {
@@ -237,12 +243,28 @@ body {
 @keyframes mapsa-pop {
   from {
     opacity: 0;
-    transform: scale(0.6);
+    transform: scale(0.8);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mapsa-pin {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Skydd mot dubbeltryck: en knapp som just dykt upp (Boka i kortet och på
+   profilen) tar inte emot tryck de första 600 ms. Fungerar utan JavaScript. */
+@keyframes tap-guard {
+  from {
+    pointer-events: none;
   }
   to {
-    opacity: 1;
-    transform: scale(1);
+    pointer-events: auto;
   }
+}
+.tap-guard {
+  animation: tap-guard 600ms step-end;
 }
 
 /* ---------- Landningssidan (/foretag) ---------- */

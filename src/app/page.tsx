@@ -11,6 +11,7 @@ import { brandFonts } from "./foretag/fonts";
 import { getCategory, type CategorySlug } from "@/lib/categories";
 import { listPublishedPractitioners, type Practitioner } from "@/lib/db/practitioners";
 import { filterPractitioners, parseFilters, type Filters } from "@/lib/search";
+import { isExternalUrl, isValidBookingUrl } from "@/lib/urls";
 
 // Startsida: karta + lista. Layouten finns i HomeShell.
 
@@ -30,7 +31,10 @@ export default function Home(props: PageProps<"/">) {
 
 async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
   await connection();
-  const filters = parseFilters(await searchParams);
+  const params = await searchParams;
+  const filters = parseFilters(params);
+  // ?vald=<slug>: delad länk – öppna kortet för den utövaren direkt.
+  const vald = typeof params.vald === "string" ? params.vald : null;
   const all = await listPublishedPractitioners();
   const results = filterPractitioners(all, filters);
 
@@ -64,6 +68,7 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/">["sea
       }
       footer={<Footer />}
       items={results.map(toItem)}
+      initialSelected={vald}
     />
   );
 }
@@ -109,13 +114,20 @@ function Footer() {
 
 function toItem(p: Practitioner): ShellItem {
   const price = lowestPrice(p);
+  const categoryName = getCategory(p.category)?.name ?? "";
   return {
     slug: p.slug,
     name: p.name,
-    label: price === null ? (getCategory(p.category)?.name ?? p.name) : formatPrice(price),
+    label: price === null ? categoryName || p.name : formatPrice(price),
     lat: p.lat,
     lng: p.lng,
     href: `/utovare/${p.slug}`,
+    image: p.images[0]?.path ?? null,
+    category: p.category,
+    categoryName,
+    area: p.area,
+    priceText: price === null ? null : `fr. ${formatPrice(price)}`,
+    booking: isValidBookingUrl(p.bookingUrl) ? { href: p.bookingUrl, external: isExternalUrl(p.bookingUrl) } : null,
   };
 }
 

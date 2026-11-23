@@ -11,7 +11,7 @@ import { kommunFor } from "@/lib/areas";
 import { getCategory } from "@/lib/categories";
 import { getPublishedPractitionerBySlug } from "@/lib/db/practitioners";
 import { isExternalUrl, isValidBookingUrl, toVideoEmbedUrl } from "@/lib/urls";
-import { BookingButton } from "./booking-button";
+import { BookingButton } from "@/components/booking-button";
 
 export async function generateMetadata(props: PageProps<"/utovare/[slug]">): Promise<Metadata> {
   const { slug } = await props.params;
