@@ -135,7 +135,7 @@ function HomeFallback() {
   return (
     <HomeShell
       search={<SearchBar />}
-      header={<ListHeader />}
+      header={<ListHeader available={[]} />}
       list={
         <>
         <ul className="hidden gap-x-6 gap-y-8 pt-2 lg:grid lg:grid-cols-2" aria-busy="true" aria-label="Hämtar utövare">
