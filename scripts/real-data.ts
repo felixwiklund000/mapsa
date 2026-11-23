@@ -1,4 +1,5 @@
 // Riktiga företag i Karlskrona, från offentliga uppgifter (se `source`).
+// Bara företag med priser i källan är med.
 //
 // Bara det som stod i källan är med: namn, adress, bokningslänk, och
 // priser/öppettider där de syntes. Inget är påhittat. Koordinaterna är
@@ -43,20 +44,6 @@ export const REAL_PLACES: RealPlace[] = [
       { name: "Medicinsk massage", price: 650, minutes: 45 },
     ],
     source: "https://www.bokadirekt.se/places/naprapat-orjan-bergstrom-45443",
-  },
-  {
-    slug: "access-rehab-karlskrona",
-    name: "Access Rehab Karlskrona",
-    category: "kiropraktor",
-    area: "Rosenholm",
-    address: "Arenavägen 3",
-    lat: 56.1992,
-    lng: 15.5872,
-    description:
-      "Klinik i testlabbet på Rosenholm med kiropraktorer och naprapat. Erbjuder även massage och personlig träning.",
-    bookingUrl: "https://accessrehab.se",
-    services: [],
-    source: "https://www.varden.se/vardgivare/22637-access-rehab-karlskrona",
   },
   {
     slug: "ferdoss-salong",
@@ -108,34 +95,5 @@ export const REAL_PLACES: RealPlace[] = [
       { name: "Barnklippning", price: 250, minutes: 30 },
     ],
     source: "https://www.bokadirekt.se/places/cxi-barbershop-40863",
-  },
-  {
-    slug: "grand-gym-karlskrona",
-    name: "Grand Gym",
-    category: "pt",
-    area: "Trossö",
-    address: "Ronnebygatan 19",
-    lat: 56.1629,
-    lng: 15.5866,
-    openingHours: "Bemannat mån–fre 8–20",
-    description: "Gym och squash mitt på Trossö. Instruktioner, träningsprogram och personlig träning.",
-    bookingUrl: "https://grandgym.se",
-    phone: "0708-13 44 20",
-    services: [],
-    source: "https://www.foretagarna.se/foreningar/karlskrona/lokala-erbjudanden/",
-  },
-  {
-    slug: "first-skin-company-karlskrona",
-    name: "First Skin Company",
-    category: "skonhet",
-    area: "Trossö",
-    address: "Ronnebygatan 9 B",
-    lat: 56.1625,
-    lng: 15.5834,
-    description: "Hudvårdsklinik med auktoriserade hudterapeuter på Ronnebygatan.",
-    bookingUrl: "https://www.skincompany.se",
-    email: "info@skincompany.se",
-    services: [],
-    source: "https://framtid.se/yrke/spa-terapeut/lediga-jobb/first-skin-company-karlskrona-ab/hudterapeut-spaterapeut-fransstylist",
   },
 ];

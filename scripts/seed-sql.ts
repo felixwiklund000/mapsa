@@ -4,7 +4,8 @@
 //
 // - Tar bort gamla påhittade testprofiler (is_test_data = true).
 // - Lägger in företagen i real-data.ts. Finns ett företag redan (samma slug)
-//   ersätts det, så att filen alltid är facit.
+//   ersätts det. Inlagda företag (utan egen anmälan) som inte längre finns i
+//   filen tas bort – filen är alltid facit.
 // - Rör aldrig utövare som anmält sig själva.
 //
 // Värdena kommer bara från real-data.ts, aldrig från användare.
@@ -58,6 +59,9 @@ ${SCHEMA_SQL.trim()}
 BEGIN;
 
 DELETE FROM practitioners WHERE is_test_data = true;
+-- Företag som lagts in utan egen anmälan (consent_at tomt) och som inte
+-- längre finns i real-data.ts tas bort. Ersätt sedan de som finns.
+DELETE FROM practitioners WHERE consent_at IS NULL AND is_test_data = false AND slug NOT IN (${slugs});
 DELETE FROM practitioners WHERE slug IN (${slugs});
 
 ${statements.join("\n\n")}

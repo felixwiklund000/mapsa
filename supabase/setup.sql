@@ -61,7 +61,10 @@ ALTER TABLE images ENABLE ROW LEVEL SECURITY;
 BEGIN;
 
 DELETE FROM practitioners WHERE is_test_data = true;
-DELETE FROM practitioners WHERE slug IN ('naprapat-orjan-bergstrom', 'access-rehab-karlskrona', 'ferdoss-salong', 'grease-and-peace-barbershop', 'cxi-barbershop', 'grand-gym-karlskrona', 'first-skin-company-karlskrona');
+-- Företag som lagts in utan egen anmälan (consent_at tomt) och som inte
+-- längre finns i real-data.ts tas bort. Ersätt sedan de som finns.
+DELETE FROM practitioners WHERE consent_at IS NULL AND is_test_data = false AND slug NOT IN ('naprapat-orjan-bergstrom', 'ferdoss-salong', 'grease-and-peace-barbershop', 'cxi-barbershop');
+DELETE FROM practitioners WHERE slug IN ('naprapat-orjan-bergstrom', 'ferdoss-salong', 'grease-and-peace-barbershop', 'cxi-barbershop');
 
 INSERT INTO practitioners
   (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
@@ -79,14 +82,6 @@ FROM practitioners p,
   ('Medicinsk massage', 650, 45::integer, 1)
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'naprapat-orjan-bergstrom';
-
-INSERT INTO practitioners
-  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
-   email, phone, level, status, is_test_data)
-VALUES
-  ('access-rehab-karlskrona', 'Access Rehab Karlskrona', 'kiropraktor', 'Rosenholm', 'Arenavägen 3',
-   56.1992, 15.5872, NULL, 'Klinik i testlabbet på Rosenholm med kiropraktorer och naprapat. Erbjuder även massage och personlig träning.', 'https://accessrehab.se',
-   '', NULL, 'grundlistning', 'publicerad', false);
 
 INSERT INTO practitioners
   (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
@@ -139,21 +134,5 @@ FROM practitioners p,
   ('Barnklippning', 250, 30::integer, 2)
 ) AS v(name, price_sek, duration_min, sort_order)
 WHERE p.slug = 'cxi-barbershop';
-
-INSERT INTO practitioners
-  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
-   email, phone, level, status, is_test_data)
-VALUES
-  ('grand-gym-karlskrona', 'Grand Gym', 'pt', 'Trossö', 'Ronnebygatan 19',
-   56.1629, 15.5866, 'Bemannat mån–fre 8–20', 'Gym och squash mitt på Trossö. Instruktioner, träningsprogram och personlig träning.', 'https://grandgym.se',
-   '', '0708-13 44 20', 'grundlistning', 'publicerad', false);
-
-INSERT INTO practitioners
-  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
-   email, phone, level, status, is_test_data)
-VALUES
-  ('first-skin-company-karlskrona', 'First Skin Company', 'skonhet', 'Trossö', 'Ronnebygatan 9 B',
-   56.1625, 15.5834, NULL, 'Hudvårdsklinik med auktoriserade hudterapeuter på Ronnebygatan.', 'https://www.skincompany.se',
-   'info@skincompany.se', NULL, 'grundlistning', 'publicerad', false);
 
 COMMIT;
