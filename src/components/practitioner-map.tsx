@@ -20,7 +20,26 @@ export type MapInsets = { top: number; bottom: number; left: number; right: numb
 
 type MapLibreModule = typeof import("maplibre-gl");
 
-const PITCH = 45; // lätt lutning så att byggnaderna syns i 3D
+const PITCH = 20; // bara lite lutad: mest översikt, men husen får lite djup
+// Startvyn är aldrig mer utzoomad än så här (MapLibre-zoom, 512 px-rutor).
+// Mobilen har mindre synlig kartyta (sökfält + ark), därför lite lägre där.
+const MIN_START_ZOOM = { mobile: 12, desktop: 12.5 };
+const CORE_RADIUS_KM = 3; // utövare längre bort från mitten räknas inte med i startvyn
+
+/** Avstånd i km mellan två punkter (räcker för korta avstånd). */
+function distanceKm(a: MapPoint, b: { lat: number; lng: number }) {
+  const dLat = (a.lat - b.lat) * 111;
+  const dLng = (a.lng - b.lng) * 111 * Math.cos((a.lat * Math.PI) / 180);
+  return Math.hypot(dLat, dLng);
+}
+
+/** Utövarna runt mitten (medianen) – ensamma långt bort lämnas utanför startvyn. */
+function corePoints(points: MapPoint[]): MapPoint[] {
+  const median = (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)];
+  const center = { lat: median(points.map((p) => p.lat)), lng: median(points.map((p) => p.lng)) };
+  const core = points.filter((p) => distanceKm(p, center) <= CORE_RADIUS_KM);
+  return core.length > 0 ? core : points;
+}
 
 // Interaktiv karta (MapLibre GL + OpenFreeMap, egen stil i lib/map-style.ts).
 // Nålarna är prislappar i Airbnb-stil: vita, runda, mjuk skugga. Vald = svart.
@@ -112,6 +131,8 @@ export function PractitionerMap({
       map.keyboard.disableRotation();
       map.on("moveend", declutter);
       mapRef.current = map;
+      // Bara under utveckling: gör kartan åtkomlig för felsökning i konsolen.
+      if (process.env.NODE_ENV !== "production") (window as unknown as { __mapsaMap?: MapLibreMap }).__mapsaMap = map;
       resizeObserver = new ResizeObserver(() => map.resize());
       resizeObserver.observe(el);
       setReady(true);
@@ -182,12 +203,16 @@ export function PractitionerMap({
 
     const i = insetsRef.current;
     const padding = { top: i.top + 48, bottom: i.bottom + 48, left: i.left + 48, right: i.right + 48 };
-    if (points.length === 1) {
-      map.jumpTo({ center: [points[0].lng, points[0].lat], zoom: 14 });
-    } else if (points.length > 1) {
+    // Startvy: inzoomad där flest utövare finns (inte hela kommunen).
+    const core = points.length > 0 ? corePoints(points) : [];
+    if (core.length === 1) {
+      map.jumpTo({ center: [core[0].lng, core[0].lat], zoom: 15, padding });
+    } else if (core.length > 1) {
       const bounds = new lib.LngLatBounds();
-      points.forEach((p) => bounds.extend([p.lng, p.lat]));
-      map.fitBounds(bounds, { padding, maxZoom: 14, animate: false });
+      core.forEach((p) => bounds.extend([p.lng, p.lat]));
+      const camera = map.cameraForBounds(bounds, { padding, maxZoom: 15.5 });
+      const minZoom = map.getContainer().clientWidth < 640 ? MIN_START_ZOOM.mobile : MIN_START_ZOOM.desktop;
+      if (camera) map.jumpTo({ ...camera, zoom: Math.max(camera.zoom ?? minZoom, minZoom), pitch: PITCH });
     }
     declutter();
   }, [points, ready, declutter]);
