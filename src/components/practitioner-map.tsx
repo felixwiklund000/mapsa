@@ -4,6 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import { KARLSKRONA_CENTER } from "@/lib/areas";
+import { droneFlight } from "@/lib/drone-flight";
 import { BLEKINGE_BOUNDS, mapStyle } from "@/lib/map-style";
 
 export type MapPoint = {
@@ -117,7 +118,7 @@ export function PractitionerMap({
           center: [KARLSKRONA_CENTER.lng, KARLSKRONA_CENTER.lat],
           zoom: 12,
           pitch: PITCH,
-          maxPitch: 60,
+          maxPitch: 70, // drönarflygningen sveper in lågt
           // Mapsa finns bara i Blekinge än så länge.
           maxBounds: BLEKINGE_BOUNDS,
           minZoom: 8,
@@ -220,7 +221,8 @@ export function PractitionerMap({
     declutter();
   }, [points, ready, declutter]);
 
-  // Vald lapp: svart och lite större. Kartan glider dit och lutar in (flyTo).
+  // Vald lapp: svart och lite större. Kartan flyger dit som en drönare
+  // (lib/drone-flight.ts): svep in lågt mellan husen, stig sedan upp.
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
@@ -232,14 +234,13 @@ export function PractitionerMap({
     if (!point) return;
 
     const i = insetsRef.current;
-    const camera = {
-      center: [point.lng, point.lat] as [number, number],
-      zoom: Math.max(map.getZoom(), 15),
-      pitch: PITCH,
-      padding: { top: i.top, bottom: i.bottom, left: i.left, right: i.right },
-    };
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) map.jumpTo(camera);
-    else map.flyTo({ ...camera, duration: 1000, curve: 1.3 });
+    const padding = { top: i.top, bottom: i.bottom, left: i.left, right: i.right };
+    const center: [number, number] = [point.lng, point.lat];
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      map.jumpTo({ center, zoom: Math.max(map.getZoom(), 15), pitch: PITCH, padding });
+      return;
+    }
+    return droneFlight(map, center, padding);
   }, [selectedSlug, ready, points, declutter]);
 
   return <div ref={containerRef} role="region" aria-label="Karta över utövare" className="h-full w-full" />;
