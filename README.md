@@ -13,14 +13,14 @@ Kräver Node.js 22.18 eller senare (`node -v`).
 ```bash
 npm install
 cp .env.example .env.local   # fyll i DATABASE_URL från Supabase
-npm run db:seed              # skapar tabeller + testprofiler
+npm run db:seed              # skapar tabeller + företagen i scripts/real-data.ts
 npm run dev                  # http://localhost:3000
 ```
 
 | Kommando | Vad det gör |
 | --- | --- |
-| `npm run db:seed` | Skapar tabellerna (om de saknas) och lägger in testprofilerna. Går att köra flera gånger. |
-| `npm run db:export-sql` | Skriver om `supabase/setup.sql` från testdatan i `scripts/seed-data.ts`. |
+| `npm run db:seed` | Skapar tabellerna (om de saknas) och lägger in företagen i `scripts/real-data.ts`. Går att köra flera gånger. |
+| `npm run db:export-sql` | Skriver om `supabase/setup.sql` från företagen i `scripts/real-data.ts`. |
 | `npm run icons` | Ritar om app-ikonerna från loggan. |
 
 All databaskod finns i `src/lib/db/`. Designsystemet finns i `src/app/design-system.css`.
@@ -38,7 +38,7 @@ All databaskod finns i `src/lib/db/`. Designsystemet finns i `src/app/design-sys
 4. **Region**: välj en i Europa, helst **Stockholm** om den finns, annars **Frankfurt**.
 5. Klicka **Create new project** och vänta en–två minuter.
 
-### 2. Lägg in tabellerna och testprofilerna
+### 2. Lägg in tabellerna och företagen
 
 1. Öppna filen `supabase/setup.sql` här på GitHub, klicka **Raw** och kopiera allt.
 2. I Supabase: klicka **SQL Editor** i vänstermenyn och öppna en ny fråga.

@@ -86,7 +86,7 @@ function toItem(p: Practitioner): ShellItem {
   return {
     slug: p.slug,
     name: p.name,
-    label: price === null ? "–" : formatPrice(price),
+    label: price === null ? (getCategory(p.category)?.name ?? p.name) : formatPrice(price),
     lat: p.lat,
     lng: p.lng,
     href: `/utovare/${p.slug}`,

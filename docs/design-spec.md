@@ -92,8 +92,8 @@ tills vidare (önskemål: färgerna var för mörka).
 
 ## Bilder
 
-- Riktiga foton på alla testprofiler, rätt kategori, samma beskärning (4:3, 1200×900).
-  Se `docs/testdata-bilder.md`. Ingen bokstav eller ikon i stället för bild – saknas filen syns en tom `fill`-yta.
+- Foton bara med företagets tillåtelse, samma beskärning (4:3, 1200×900, `npm run photos`).
+  Ingen bokstav eller ikon i stället för bild – saknas foto syns en tom `fill`-yta.
 
 ## Rörelse
 

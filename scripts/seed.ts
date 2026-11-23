@@ -1,4 +1,4 @@
-// Skapar tabellerna och lägger in testprofilerna i databasen som
+// Skapar tabellerna och lägger in de riktiga företagen (scripts/real-data.ts) i databasen som
 // DATABASE_URL pekar på. Kör med: npm run db:seed
 //
 // DATABASE_URL läses från .env.local om filen finns, annars från miljön.
@@ -15,8 +15,8 @@ try {
   // Flera satser i en sträng skickas med det "enkla" protokollet.
   await sql.unsafe(buildSeedSql());
   const [{ count }] = await sql<{ count: string }[]>`
-    SELECT count(*) FROM practitioners WHERE is_test_data = true`;
-  console.log(`Klart: tabellerna finns och ${count} av ${PROFILE_COUNT} testprofiler är inlagda.`);
+    SELECT count(*) FROM practitioners WHERE is_test_data = false AND status = 'publicerad'`;
+  console.log(`Klart: ${PROFILE_COUNT} företag från real-data.ts inlagda, ${count} publicerade utövare totalt.`);
 } catch (err) {
   console.error("Seed misslyckades:", err instanceof Error ? err.message : err);
   process.exitCode = 1;

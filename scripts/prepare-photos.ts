@@ -1,19 +1,19 @@
-// Beskär testprofilernas foton till samma format: 4:3, 1200×900, JPG.
+// Beskär utövarnas foton till samma format: 4:3, 1200×900, JPG.
+// Använd bara foton som företaget själv gett er lov att använda.
 //
 // 1. Lägg originalen i mappen bilder-original/ med utövarens slug som namn,
 //    t.ex. bilder-original/lugna-handen-massage.jpg (jpg, jpeg, png eller webp).
 // 2. Kör: npm run photos
-// 3. Resultatet hamnar i public/testdata/<slug>.jpg.
-//
-// Se docs/testdata-bilder.md för vilka foton som behövs.
+// 3. Resultatet hamnar i public/foton/<slug>.jpg. Lägg sedan in sökvägen
+//    /foton/<slug>.jpg som bild för utövaren.
 
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import { extname, join, basename } from "node:path";
 import sharp from "sharp";
-import { PROFILES } from "./seed-data.ts";
+import { REAL_PLACES as PROFILES } from "./real-data.ts";
 
 const SRC = "bilder-original";
-const OUT = "public/testdata";
+const OUT = "public/foton";
 
 if (!existsSync(SRC)) {
   console.error(`Mappen ${SRC}/ finns inte. Skapa den och lägg originalfotona där.`);
@@ -27,7 +27,7 @@ const slugs = new Set(PROFILES.map((p) => p.slug));
 for (const file of files) {
   const slug = basename(file, extname(file));
   if (!slugs.has(slug)) {
-    console.warn(`Hoppar över ${file}: ingen testprofil heter ${slug}.`);
+    console.warn(`Hoppar över ${file}: ingen utövare heter ${slug}.`);
     continue;
   }
   await sharp(join(SRC, file))
@@ -39,4 +39,4 @@ for (const file of files) {
 }
 
 const missing = PROFILES.filter((p) => !existsSync(join(OUT, `${p.slug}.jpg`))).map((p) => p.slug);
-console.log(missing.length ? `Saknas fortfarande: ${missing.join(", ")}` : "Alla testprofiler har foto.");
+console.log(missing.length ? `Saknar foto: ${missing.join(", ")}` : "Alla utövare har foto.");

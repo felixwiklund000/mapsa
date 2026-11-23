@@ -99,11 +99,13 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
                 </a>
               </InfoRow>
             )}
-            <InfoRow icon={<Mail className="size-5" aria-hidden />} label="E-post">
-              <a href={`mailto:${p.email}`} className="underline-offset-4 hover:underline">
-                {p.email}
-              </a>
-            </InfoRow>
+            {p.email && (
+              <InfoRow icon={<Mail className="size-5" aria-hidden />} label="E-post">
+                <a href={`mailto:${p.email}`} className="underline-offset-4 hover:underline">
+                  {p.email}
+                </a>
+              </InfoRow>
+            )}
             {p.campaign && p.level !== "grundlistning" && (
               <InfoRow icon={<Tag className="size-5" aria-hidden />} label="Erbjudande">
                 {p.campaign}

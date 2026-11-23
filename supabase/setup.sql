@@ -1,6 +1,6 @@
--- Mapsa: skapar tabellerna (om de saknas) och lägger in påhittade testprofiler.
--- Går att köra flera gånger: gammal testdata tas bort först, riktiga
--- utövare (is_test_data = false) rörs aldrig.
+-- Mapsa: skapar tabellerna (om de saknas) och lägger in riktiga företag i Karlskrona
+-- (scripts/real-data.ts). Går att köra flera gånger. Tar bort gamla påhittade
+-- testprofiler. Utövare som anmält sig själva rörs aldrig.
 
 CREATE TABLE IF NOT EXISTS practitioners (
   id               integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -61,186 +61,99 @@ ALTER TABLE images ENABLE ROW LEVEL SECURITY;
 BEGIN;
 
 DELETE FROM practitioners WHERE is_test_data = true;
+DELETE FROM practitioners WHERE slug IN ('naprapat-orjan-bergstrom', 'access-rehab-karlskrona', 'ferdoss-salong', 'grease-and-peace-barbershop', 'cxi-barbershop', 'grand-gym-karlskrona', 'first-skin-company-karlskrona');
 
 INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
+  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
+   email, phone, level, status, is_test_data)
 VALUES
-  ('lugna-handen-massage', 'Lugna Handen Massage', 'massage', 'Trossö',
-   56.162, 15.5857,
-   'Mån–fre 9–18, lör 10–14', 'Klassisk massage och djupvävnadsmassage i en lugn lokal mitt på Trossö. Bra om du sitter mycket vid skrivbordet.', '/testdata',
-   'lugna-handen-massage@example.com', NULL, 'mellan', 'publicerad',
-   now() - interval '40 days', now() - interval '40 days', true);
+  ('naprapat-orjan-bergstrom', 'Naprapat Örjan Bergström', 'naprapat', 'Karlskrona', 'Valhallavägen 16',
+   56.1745, 15.5905, 'Vardagar, stängt helger', 'Naprapat på Valhallavägen. Erbjuder naprapatbehandling och medicinsk massage.', 'https://www.bokadirekt.se/places/naprapat-orjan-bergstrom-45443',
+   '', NULL, 'grundlistning', 'publicerad', false);
 
 INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
 SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
 FROM practitioners p,
 (VALUES
-  ('Klassisk massage', 595, 50, 0),
-  ('Djupvävnadsmassage', 695, 50, 1),
-  ('Rygg- och nackmassage', 395, 25, 2)
+  ('Naprapatbehandling', 800, 45::integer, 0),
+  ('Medicinsk massage', 650, 45::integer, 1)
 ) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'lugna-handen-massage';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/lugna-handen-massage.jpg', 0 FROM practitioners WHERE slug = 'lugna-handen-massage';
+WHERE p.slug = 'naprapat-orjan-bergstrom';
 
 INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
+  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
+   email, phone, level, status, is_test_data)
 VALUES
-  ('kraftverket-pt', 'Kraftverket PT', 'pt', 'Kungsmarken',
-   56.1852, 15.6264,
-   'Mån–sön 6–21', 'Personlig träning för dig som vill komma igång eller bli starkare. Upplägg efter din nivå, inga måsten.', '/testdata',
-   'kraftverket-pt@example.com', NULL, 'grundlistning', 'publicerad',
-   now() - interval '12 days', now() - interval '12 days', true);
+  ('access-rehab-karlskrona', 'Access Rehab Karlskrona', 'kiropraktor', 'Rosenholm', 'Arenavägen 3',
+   56.1992, 15.5872, NULL, 'Klinik i testlabbet på Rosenholm med kiropraktorer och naprapat. Erbjuder även massage och personlig träning.', 'https://accessrehab.se',
+   '', NULL, 'grundlistning', 'publicerad', false);
+
+INSERT INTO practitioners
+  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
+   email, phone, level, status, is_test_data)
+VALUES
+  ('ferdoss-salong', 'Ferdoss salong', 'frisor', 'Trossö', 'Styrmansgatan 38',
+   56.1617, 15.5893, NULL, 'Salong för hår och skönhet – klippning, färgning, hudvård och makeup.', 'https://www.bokadirekt.se/places/ferdoss-salong-132939',
+   '', NULL, 'grundlistning', 'publicerad', false);
 
 INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
 SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
 FROM practitioners p,
 (VALUES
-  ('PT-pass', 650, 60, 0),
-  ('Kostgenomgång', 450, 45, 1),
-  ('Klippkort 10 pass', 5500, NULL, 2)
+  ('Klippning med fön', 400, NULL::integer, 0),
+  ('Barnklippning', 250, NULL::integer, 1)
 ) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'kraftverket-pt';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/kraftverket-pt.jpg', 0 FROM practitioners WHERE slug = 'kraftverket-pt';
+WHERE p.slug = 'ferdoss-salong';
 
 INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
+  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
+   email, phone, level, status, is_test_data)
 VALUES
-  ('saxen-och-spegeln', 'Saxen & Spegeln', 'frisor', 'Pottholmen',
-   56.1668, 15.5802,
-   'Tis–fre 10–18, lör 9–15', 'Liten frisörsalong med fokus på klippning och färg. Drop-in när det finns lediga tider.', '/testdata',
-   'saxen-och-spegeln@example.com', '20 % på färg för nya kunder hela december.', 'bas', 'publicerad',
-   now() - interval '25 days', now() - interval '25 days', true);
+  ('grease-and-peace-barbershop', 'Grease & Peace Barbershop', 'frisor', 'Trossö', 'Drottninggatan 10',
+   56.1604, 15.5852, 'Tis–lör 10.30–18, lördagar endast drop-in', 'Barbershop på Drottninggatan med klippning och skäggvård.', 'https://www.bokadirekt.se/places/grease-peace-barbershop-35394',
+   '', NULL, 'grundlistning', 'publicerad', false);
 
 INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
 SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
 FROM practitioners p,
 (VALUES
-  ('Klippning kort hår', 450, 30, 0),
-  ('Klippning långt hår', 595, 45, 1),
-  ('Färg och klipp', 1450, 120, 2),
-  ('Barnklippning (under 12)', 295, 30, 3)
+  ('Klippning', 600, 45::integer, 0),
+  ('Royal Treatment (klippning, skägg, tvätt, styling)', 950, 90::integer, 1)
 ) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'saxen-och-spegeln';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/saxen-och-spegeln.jpg', 0 FROM practitioners WHERE slug = 'saxen-och-spegeln';
+WHERE p.slug = 'grease-and-peace-barbershop';
 
 INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
+  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
+   email, phone, level, status, is_test_data)
 VALUES
-  ('ryggraden-kiropraktik', 'Ryggraden Kiropraktik', 'kiropraktor', 'Lyckeby',
-   56.198499999999996, 15.6473,
-   'Mån–tor 8–17, fre 8–13', 'Legitimerad kiropraktor som behandlar rygg, nacke och huvudvärk. Första besöket innehåller en grundlig undersökning.', '/testdata',
-   'ryggraden-kiropraktik@example.com', NULL, 'vip', 'publicerad',
-   now() - interval '60 days', now() - interval '60 days', true);
+  ('cxi-barbershop', 'CXI Barbershop', 'frisor', 'Trossö', 'Ronnebygatan 19',
+   56.1627, 15.5859, 'Mån–fre 10–18.30, lör 10–15', 'Barbershop med certifierade barberare. Boka via Bokadirekt eller kom in utan bokning (CutQ).', 'https://www.bokadirekt.se/places/cxi-barbershop-40863',
+   '', NULL, 'grundlistning', 'publicerad', false);
 
 INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
 SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
 FROM practitioners p,
 (VALUES
-  ('Nybesök inkl. undersökning', 795, 45, 0),
-  ('Återbesök', 595, 30, 1)
+  ('Klippning', 300, 30::integer, 0),
+  ('Hår och skägg', 500, 60::integer, 1),
+  ('Barnklippning', 250, 30::integer, 2)
 ) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'ryggraden-kiropraktik';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/ryggraden-kiropraktik.jpg', 0 FROM practitioners WHERE slug = 'ryggraden-kiropraktik';
+WHERE p.slug = 'cxi-barbershop';
 
 INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
+  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
+   email, phone, level, status, is_test_data)
 VALUES
-  ('rorelsekliniken-naprapat', 'Rörelsekliniken Naprapat', 'naprapat', 'Bergåsa',
-   56.1792, 15.593900000000001,
-   'Mån–fre 8–19', 'Naprapati för besvär i muskler och leder, med övningar du kan göra hemma mellan besöken.', '/testdata',
-   'rorelsekliniken-naprapat@example.com', NULL, 'grundlistning', 'publicerad',
-   now() - interval '5 days', now() - interval '5 days', true);
-
-INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
-SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
-FROM practitioners p,
-(VALUES
-  ('Nybesök', 750, 60, 0),
-  ('Återbesök', 650, 45, 1)
-) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'rorelsekliniken-naprapat';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/rorelsekliniken-naprapat.jpg', 0 FROM practitioners WHERE slug = 'rorelsekliniken-naprapat';
+  ('grand-gym-karlskrona', 'Grand Gym', 'pt', 'Trossö', 'Ronnebygatan 19',
+   56.1629, 15.5866, 'Bemannat mån–fre 8–20', 'Gym och squash mitt på Trossö. Instruktioner, träningsprogram och personlig träning.', 'https://grandgym.se',
+   '', '0708-13 44 20', 'grundlistning', 'publicerad', false);
 
 INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
+  (slug, name, category, area, address, lat, lng, opening_hours, description, booking_url,
+   email, phone, level, status, is_test_data)
 VALUES
-  ('hudateljen-glod', 'Hudateljén Glöd', 'skonhet', 'Rosenholm',
-   56.198100000000004, 15.5858,
-   'Ons–lör 10–18', 'Ansiktsbehandlingar och fransar. Vi hjälper dig hitta en hudrutin som funkar i vardagen.', '/testdata',
-   'hudateljen-glod@example.com', NULL, 'bas', 'publicerad',
-   now() - interval '33 days', now() - interval '33 days', true);
-
-INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
-SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
-FROM practitioners p,
-(VALUES
-  ('Klassisk ansiktsbehandling', 795, 60, 0),
-  ('Fransförlängning, nytt set', 990, 90, 1),
-  ('Bryn- och fransfärgning', 350, 30, 2)
-) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'hudateljen-glod';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/hudateljen-glod.jpg', 0 FROM practitioners WHERE slug = 'hudateljen-glod';
-
-INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
-VALUES
-  ('jamjo-sportmassage', 'Jämjö Sportmassage', 'massage', 'Jämjö',
-   56.191100000000006, 15.8395,
-   'Kvällar och helger efter bokning', 'Sportmassage för dig som tränar mycket. Kort väg från E22.', '/testdata',
-   'jamjo-sportmassage@example.com', NULL, 'grundlistning', 'publicerad',
-   now() - interval '18 days', now() - interval '18 days', true);
-
-INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
-SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
-FROM practitioners p,
-(VALUES
-  ('Sportmassage', 550, 45, 0),
-  ('Sportmassage', 350, 25, 1)
-) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'jamjo-sportmassage';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/jamjo-sportmassage.jpg', 0 FROM practitioners WHERE slug = 'jamjo-sportmassage';
-
-INSERT INTO practitioners
-  (slug, name, category, area, lat, lng, opening_hours, description, booking_url,
-   email, campaign, level, status, registered_at, consent_at, is_test_data)
-VALUES
-  ('gullberna-frisyr', 'Gullberna Frisyr', 'frisor', 'Gullberna',
-   56.195899999999995, 15.606599999999998,
-   'Mån–fre 9–17', 'Herrfrisör med skäggtrimning. (Den här profilen väntar på granskning och ska inte synas publikt.)', '/testdata',
-   'gullberna-frisyr@example.com', NULL, 'grundlistning', 'vantar_granskning',
-   now() - interval '1 days', now() - interval '1 days', true);
-
-INSERT INTO services (practitioner_id, name, price_sek, duration_min, sort_order)
-SELECT p.id, v.name, v.price_sek, v.duration_min, v.sort_order
-FROM practitioners p,
-(VALUES
-  ('Herrklippning', 395, 30, 0),
-  ('Skäggtrimning', 195, 15, 1)
-) AS v(name, price_sek, duration_min, sort_order)
-WHERE p.slug = 'gullberna-frisyr';
-
-INSERT INTO images (practitioner_id, path, sort_order)
-SELECT id, '/testdata/gullberna-frisyr.jpg', 0 FROM practitioners WHERE slug = 'gullberna-frisyr';
+  ('first-skin-company-karlskrona', 'First Skin Company', 'skonhet', 'Trossö', 'Ronnebygatan 9 B',
+   56.1625, 15.5834, NULL, 'Hudvårdsklinik med auktoriserade hudterapeuter på Ronnebygatan.', 'https://www.skincompany.se',
+   'info@skincompany.se', NULL, 'grundlistning', 'publicerad', false);
 
 COMMIT;
