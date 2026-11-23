@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteMenu } from "./site-menu";
 
 export function Logo() {
   return (
@@ -21,9 +22,7 @@ export function SiteHeader({ className = "" }: { className?: string }) {
     <header className={`border-b border-line pt-[env(safe-area-inset-top)] ${className}`}>
       <div className="page-container flex h-14 items-center justify-between">
         <Logo />
-        <Link href="/foretag" className="rounded-full px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-fill hover:text-ink">
-          För företag
-        </Link>
+        <SiteMenu />
       </div>
     </header>
   );

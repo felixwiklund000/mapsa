@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type R
 import Link from "next/link";
 import { animate, useMotionValue, useReducedMotion, useTransform, motion } from "motion/react";
 import { Logo } from "./site-header";
+import { SiteMenu } from "./site-menu";
 import { PractitionerMap, type MapPoint } from "./practitioner-map";
 
 // Startsidans layout (se docs/design-spec.md).
@@ -190,14 +191,15 @@ export function HomeShell({
 
       {/* Panel (desktop) / flytande sök + bottenark (mobil) */}
       <div className="max-lg:contents lg:order-1 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-line">
-        <div className="absolute inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-10 lg:static lg:shrink-0 lg:px-8 lg:pt-6">
+        <div className="absolute inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-30 lg:relative lg:inset-auto lg:shrink-0 lg:px-8 lg:pt-6">
           <div className="hidden lg:mb-6 lg:flex lg:items-center lg:justify-between">
             <Logo />
-            <Link href="/foretag" className="rounded-full px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-fill hover:text-ink">
-              För företag
-            </Link>
+            <SiteMenu />
           </div>
-          {search}
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">{search}</div>
+            <SiteMenu variant="round" className="lg:hidden" />
+          </div>
         </div>
 
         <motion.section

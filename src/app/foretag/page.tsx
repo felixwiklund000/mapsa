@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Geist_Mono, Instrument_Serif } from "next/font/google";
 import { ArrowRight, CalendarCheck, Check, ChevronDown, ChevronRight, Smartphone } from "lucide-react";
 import { Logo } from "@/components/site-header";
+import { SiteMenu } from "@/components/site-menu";
 import { CityScene } from "@/components/landing/scenes";
 import { FeatureTabs } from "@/components/landing/feature-tabs";
 import { RadiatingLines } from "@/components/landing/radiating-lines";
@@ -132,15 +133,13 @@ export default function ForetagPage() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <Link href="/" className="hidden rounded-full px-3 py-2 text-sm font-medium sm:block">
-              Öppna kartan
-            </Link>
             <a
               href="#priser"
-              className="pressable inline-flex h-10 items-center rounded-full bg-panel px-5 text-sm font-medium text-white"
+              className="pressable hidden h-11 items-center rounded-full bg-panel px-5 text-sm font-medium text-white sm:inline-flex"
             >
               Kom igång
             </a>
+            <SiteMenu />
           </div>
         </div>
       </header>
