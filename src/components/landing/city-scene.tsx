@@ -47,7 +47,7 @@ const ZS: [number, number][] = [
 ];
 const PARK = { xi: 1, zi: 2 };
 
-export default function CityScene() {
+export default function CityScene({ accent = "#111111" }: { accent?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const pills = useRef<(HTMLSpanElement | null)[]>([]);
 
@@ -143,7 +143,8 @@ export default function CityScene() {
     }
 
     // Kartnålar: droppform (klot + kon), blanksvarta.
-    const pinMat = new THREE.MeshStandardMaterial({ color: C.pin, roughness: 0.3, metalness: 0.1 });
+    const pinColor = new THREE.Color(C.pin);
+    const accentColor = new THREE.Color(accent);
     const dotMat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.5 });
     const headGeo = new THREE.SphereGeometry(0.17, 32, 16);
     const tipGeo = new THREE.ConeGeometry(0.148, 0.3, 32, 1, true);
@@ -160,6 +161,7 @@ export default function CityScene() {
     }
     const pins = PINS.map((p, i) => {
       const pin = new THREE.Group();
+      const pinMat = new THREE.MeshStandardMaterial({ color: C.pin, roughness: 0.3, metalness: 0.1 });
       const head = new THREE.Mesh(headGeo, pinMat);
       head.position.y = 0.3;
       const tip = new THREE.Mesh(tipGeo, pinMat);
@@ -173,7 +175,7 @@ export default function CityScene() {
       pin.position.set(p.x, base, p.z);
       pin.scale.setScalar(0.001);
       world.add(pin);
-      return { pin, base, phase: i * 1.3 };
+      return { pin, base, phase: i * 1.3, mat: pinMat };
     });
 
     const stage = createStage(el, {
@@ -207,7 +209,8 @@ export default function CityScene() {
       for (const b of buildings) b.mesh.scale.y = Math.max(0.001, easeOutCubic((t - b.delay) / 0.9));
       for (const tr of trees) tr.obj.scale.setScalar(Math.max(0.001, easeOutBack((t - tr.delay) / 0.6)));
       const active = Math.floor(Math.max(0, t - 1.6) / 2.4) % PINS.length;
-      pins.forEach(({ pin, base, phase }, i) => {
+      pins.forEach(({ pin, base, phase, mat }, i) => {
+        mat.color.lerp(i === active ? accentColor : pinColor, 0.12);
         const appear = easeOutBack((t - 1.0 - i * 0.12) / 0.6);
         const grow = i === active ? 1.25 : 1;
         pin.scale.setScalar(Math.max(0.001, appear * grow));
@@ -233,10 +236,10 @@ export default function CityScene() {
       window.removeEventListener("pointermove", onPointer);
       stage.dispose();
     };
-  }, []);
+  }, [accent]);
 
   return (
-    <div ref={ref} className="relative h-full w-full">
+    <div ref={ref} className="relative h-full w-full" style={{ "--pill-active": accent } as never}>
       {PINS.map((p, i) => (
         <span
           key={p.label}

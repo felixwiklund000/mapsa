@@ -10,7 +10,7 @@ import { createStage, easeOutBack, flatPatch, slab } from "./three-stage";
 
 const HEIGHTS = [0.55, 0.85, 0.7, 1.1, 0.95, 1.4, 1.95];
 
-export default function ClicksScene() {
+export default function ClicksScene({ accent = "#111111" }: { accent?: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function ClicksScene() {
     world.add(flatPatch(4.35, 1.65, 0.35, "#f3f3f3", 0.002));
 
     const light = new THREE.MeshStandardMaterial({ color: "#d6d6d3", roughness: 0.6 });
-    const dark = new THREE.MeshStandardMaterial({ color: "#111111", roughness: 0.35, metalness: 0.1 });
+    const dark = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.35, metalness: 0.05 });
     const bars = HEIGHTS.map((h, i) => {
       const geo = new RoundedBoxGeometry(0.38, h, 0.38, 3, 0.08);
       geo.translate(0, h / 2, 0);
@@ -47,7 +47,7 @@ export default function ClicksScene() {
     });
     stage.scene.add(world);
     return () => stage.dispose();
-  }, []);
+  }, [accent]);
 
   return <div ref={ref} className="h-full w-full" />;
 }

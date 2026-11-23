@@ -246,14 +246,29 @@ body {
 }
 
 /* ---------- Landningssidan (/foretag) ---------- */
-/* Två rubrikstorlekar som bara landningssidan använder. Tät spärrning. */
+/* Egen palett och typsnitt – används bara på landningssidan. */
 @theme inline {
-  --text-display: clamp(2.5rem, 1.4rem + 4.4vw, 4.75rem);
-  --text-display--line-height: 1.02;
-  --text-display--letter-spacing: -0.045em;
-  --text-headline: clamp(2rem, 1.4rem + 2.2vw, 3.25rem);
-  --text-headline--line-height: 1.06;
-  --text-headline--letter-spacing: -0.035em;
+  --color-sand: #ede6d9; /* sidans bakgrund */
+  --color-sand-deep: #e2d9c8; /* kort, linjer */
+  --color-sand-light: #f6f1e8; /* ljusa kort */
+  --color-panel: #141312; /* mörka paneler */
+  --color-flame: #ff5a1f; /* accent */
+  --color-stone: #6f695e; /* dämpad text på sand */
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --text-display: clamp(3rem, 1.6rem + 5.6vw, 6.25rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.025em;
+  --text-headline: clamp(2.5rem, 1.6rem + 3vw, 4.25rem);
+  --text-headline--line-height: 1;
+  --text-headline--letter-spacing: -0.02em;
+  --text-stat: clamp(3rem, 2rem + 3vw, 4.75rem);
+  --text-stat--line-height: 1;
+  --text-stat--letter-spacing: -0.04em;
 }
 
 /* Prislapp ovanför 3D-nålarna – samma lapp som på kartan, lite större. */
@@ -266,8 +281,8 @@ body {
   height: 32px;
   padding: 0 12px;
   border-radius: 999px;
-  background: var(--canvas);
-  color: var(--ink);
+  background: #ffffff;
+  color: #000000;
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
@@ -277,11 +292,11 @@ body {
   transition: background-color 250ms ease-out, color 250ms ease-out;
 }
 .landing-pill[data-active="true"] {
-  background: var(--ink);
-  color: var(--canvas);
+  background: var(--pill-active, #000000);
+  color: #ffffff;
 }
 
-/* Mjuk uppdykning när sektioner kommer in i bild (endast CSS). */
+/* Mjuk uppdykning (hero) och när sektioner kommer in i bild. */
 @keyframes landing-rise {
   from {
     opacity: 0;
@@ -289,18 +304,53 @@ body {
   }
 }
 .landing-rise {
-  animation: landing-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: landing-rise 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 @supports (animation-timeline: view()) {
   .landing-reveal {
     animation: landing-rise linear both;
     animation-timeline: view();
-    animation-range: entry 0% entry 40%;
+    animation-range: entry 0% entry 35%;
   }
 }
+
+/* Linjer där data "flyter": streckad orange del som löper längs linjen. */
+@keyframes landing-flow {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+.landing-flow {
+  stroke-dasharray: 36 204;
+  animation: landing-flow 2.6s linear infinite;
+}
+/* Prick som åker mellan rutorna i flödesdiagrammet. */
+@keyframes landing-travel {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+  10%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+.landing-travel {
+  animation: landing-travel 2.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-rise,
-  .landing-reveal {
+  .landing-reveal,
+  .landing-flow,
+  .landing-travel {
     animation: none;
+  }
+  .landing-motion {
+    display: none;
   }
 }
