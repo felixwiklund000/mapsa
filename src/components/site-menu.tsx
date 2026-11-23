@@ -9,6 +9,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
+import { MapsaMark } from "./brand";
 import { CircleHelp, Map, Menu, Store, X, type LucideIcon } from "lucide-react";
 
 type Item = { href: string; label: string; hint?: string; icon: LucideIcon; match?: string };
@@ -97,13 +98,7 @@ export function SiteMenu({
         {open ? <X className="size-5" strokeWidth={2.25} aria-hidden /> : <Menu className="size-5" strokeWidth={2.25} aria-hidden />}
         {variant === "pill" && (
           <span className="flex size-8 items-center justify-center rounded-full bg-ink" aria-hidden>
-            <svg width="12" height="15" viewBox="0 0 22 26">
-              <path
-                d="M11 1C5.48 1 1 5.33 1 10.68c0 3.86 2.7 7.6 8.08 13.1a2.7 2.7 0 0 0 3.84 0C18.3 18.28 21 14.54 21 10.68 21 5.33 16.52 1 11 1Z"
-                fill="var(--canvas)"
-              />
-              <circle cx="11" cy="10.5" r="3.8" fill="var(--ink)" />
-            </svg>
+            <MapsaMark className="w-[18px] text-canvas" />
           </span>
         )}
       </button>
