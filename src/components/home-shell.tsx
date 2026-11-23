@@ -191,8 +191,11 @@ export function HomeShell({
       {/* Panel (desktop) / flytande sök + bottenark (mobil) */}
       <div className="max-lg:contents lg:order-1 lg:flex lg:h-dvh lg:flex-col lg:border-r lg:border-line">
         <div className="absolute inset-x-4 top-[max(16px,env(safe-area-inset-top))] z-10 lg:static lg:shrink-0 lg:px-8 lg:pt-6">
-          <div className="hidden lg:mb-6 lg:block">
+          <div className="hidden lg:mb-6 lg:flex lg:items-center lg:justify-between">
             <Logo />
+            <Link href="/foretag" className="rounded-full px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-fill hover:text-ink">
+              För företag
+            </Link>
           </div>
           {search}
         </div>

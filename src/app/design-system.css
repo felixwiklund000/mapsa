@@ -244,3 +244,63 @@ body {
     transform: scale(1);
   }
 }
+
+/* ---------- Landningssidan (/foretag) ---------- */
+/* Två rubrikstorlekar som bara landningssidan använder. Tät spärrning. */
+@theme inline {
+  --text-display: clamp(2.5rem, 1.4rem + 4.4vw, 4.75rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.045em;
+  --text-headline: clamp(2rem, 1.4rem + 2.2vw, 3.25rem);
+  --text-headline--line-height: 1.06;
+  --text-headline--letter-spacing: -0.035em;
+}
+
+/* Prislapp ovanför 3D-nålarna – samma lapp som på kartan, lite större. */
+.landing-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.14), 0 0 0 1px rgb(0 0 0 / 0.04);
+  pointer-events: none;
+  will-change: transform;
+  transition: background-color 250ms ease-out, color 250ms ease-out;
+}
+.landing-pill[data-active="true"] {
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+/* Mjuk uppdykning när sektioner kommer in i bild (endast CSS). */
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+.landing-rise {
+  animation: landing-rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@supports (animation-timeline: view()) {
+  .landing-reveal {
+    animation: landing-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-rise,
+  .landing-reveal {
+    animation: none;
+  }
+}

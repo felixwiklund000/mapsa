@@ -19,8 +19,11 @@ export function Logo() {
 export function SiteHeader({ className = "" }: { className?: string }) {
   return (
     <header className={`border-b border-line pt-[env(safe-area-inset-top)] ${className}`}>
-      <div className="page-container flex h-14 items-center">
+      <div className="page-container flex h-14 items-center justify-between">
         <Logo />
+        <Link href="/foretag" className="rounded-full px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-fill hover:text-ink">
+          För företag
+        </Link>
       </div>
     </header>
   );

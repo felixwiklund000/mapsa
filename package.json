@@ -16,13 +16,15 @@
     "geo": "node --no-warnings scripts/build-blekinge-geo.ts"
   },
   "dependencies": {
+    "@types/three": "^0.181.0",
     "lucide-react": "^1.73.0",
     "maplibre-gl": "^6.19.0",
     "motion": "^14.14.0",
     "next": "16.4.6",
     "postgres": "^4.1.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "three": "^0.181.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
