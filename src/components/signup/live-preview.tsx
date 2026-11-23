@@ -41,7 +41,7 @@ export function LivePreview({ fields, className = "" }: { fields: SignupFields; 
           onSelect={noop}
           insets={NO_INSETS}
           showZoom={false}
-          autoFit={false}
+          fitKey={placed ? `${lat},${lng}` : ""}
           label="Förhandsvisning av din prislapp på kartan"
         />
         {!placed && (

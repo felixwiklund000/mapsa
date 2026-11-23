@@ -5,7 +5,6 @@ import Link from "next/link";
 import { animate, useMotionValue, useReducedMotion, useTransform, motion } from "motion/react";
 import { Logo } from "./site-header";
 import { PageSwitch, SiteMenu } from "./site-menu";
-import { Map as MapIcon } from "lucide-react";
 import { PractitionerMap, type MapPoint } from "./practitioner-map";
 
 // Startsidans layout (se docs/design-spec.md).
@@ -45,9 +44,6 @@ export function HomeShell({
   const [isDesktop, setIsDesktop] = useState(false);
   const [snap, setSnap] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
-  // "Visa alla": syns när något är valt eller kartan flyttats; flyger tillbaka.
-  const [overviewKey, setOverviewKey] = useState(0);
-  const [moved, setMoved] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
@@ -97,15 +93,8 @@ export function HomeShell({
     (selectedRow as HTMLElement | null)?.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
   }, [activeSlug, items, reduceMotion]);
 
-  function showAll() {
-    setSelected(null);
-    setMoved(false);
-    setOverviewKey((k) => k + 1);
-  }
-
   function select(slug: string) {
     setSelected(slug);
-    setMoved(true);
     if (!isDesktop && snap === 0) setSnap(1); // gör plats för raden och knappen
   }
 
@@ -200,19 +189,8 @@ export function HomeShell({
             onSelect={select}
             insets={insets}
             showZoom={isDesktop}
-            overviewKey={overviewKey}
-            onUserMove={() => setMoved(true)}
+            fitKey={items.map((i) => i.slug).join("|")}
           />
-        )}
-        {moved && (
-          <button
-            type="button"
-            onClick={showAll}
-            className="pressable absolute top-[calc(max(16px,env(safe-area-inset-top))+72px)] left-1/2 z-10 flex h-10 -translate-x-1/2 items-center gap-2 rounded-full bg-canvas px-4 text-sm font-semibold shadow-float lg:top-4"
-          >
-            <MapIcon className="size-4" strokeWidth={2.25} aria-hidden />
-            Visa alla
-          </button>
         )}
       </div>
 

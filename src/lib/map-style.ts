@@ -1,7 +1,8 @@
-// Kartstil för MapLibre, inspirerad av Ubers och Airbnbs kartor:
-// lugn ljusgrå mark, vita vägar, mjukt blått vatten, dämpat grönt och låga
-// grå byggnader i 3D. Alltid ljus. Kartdata: OpenFreeMap (fritt, ingen API-nyckel),
-// schema OpenMapTiles. Se docs/design-spec.md, avsnittet Kartan.
+// Kartstil för MapLibre: platt, lugn och dämpad, i sidans varma toner –
+// ljus mark, vita vägar, dämpat vatten och grönt, platta byggnader och få
+// etiketter (orter, stadsdelar och gatunamn). Inga POI-ikoner, ingen 3D.
+// Kartdata: OpenFreeMap (fritt, ingen API-nyckel), schema OpenMapTiles.
+// Se docs/design-spec.md, avsnittet Kartan.
 
 import type { StyleSpecification } from "maplibre-gl";
 import blekinge from "./blekinge-geo.json";
@@ -21,28 +22,24 @@ type Palette = {
   roadCasing: string;
   path: string;
   building: string;
-  buildingTop: string;
   label: string;
   labelHalo: string;
-  waterLabel: string;
 };
 
-// Ljus och mjuk, i Airbnb/Uber-anda: ljus mark med en aning grönt,
-// ljusgröna parker, ljusblått vatten, vita vägar, ljusgrå byggnader.
+// Dämpad och varm, nära sidans sandtoner, så att de orange prislapparna är
+// det enda som sticker ut.
 const LIGHT: Palette = {
-  land: "#f2f3ef",
-  landAlt: "#eef0eb",
-  green: "#d8ecc9",
-  wood: "#cfe6bd",
-  water: "#b4dcf7",
+  land: "#f6f4ef",
+  landAlt: "#f2efe8",
+  green: "#e4eadb",
+  wood: "#dfe6d5",
+  water: "#d4e2ea",
   road: "#ffffff",
-  roadCasing: "#e2e3df",
-  path: "#e8e9e5",
-  building: "#c4c4c1", // mörkgrå
-  buildingTop: "#9d9d9a", // mörkgrå 3D-hus
-  label: "#6b6b6b",
+  roadCasing: "#e7e3db",
+  path: "#ece8e0",
+  building: "#ebe7df",
+  label: "#857f75",
   labelHalo: "#ffffff",
-  waterLabel: "#4a86b5",
 };
 
 // Vägbredd (px) som växer med zoomnivån.
@@ -71,8 +68,6 @@ export function mapStyle(): StyleSpecification {
       blekinge: { type: "geojson", data: blekinge.region as never },
       outside: { type: "geojson", data: blekinge.mask as never },
     },
-    // Mjukt ljus på byggnaderna (svag skugga på ena sidan).
-    light: { anchor: "viewport", color: "#ffffff", intensity: 0.3, position: [1.3, 210, 35] },
     layers: [
       { id: "land", type: "background", paint: { "background-color": c.land } },
       {
@@ -129,65 +124,26 @@ export function mapStyle(): StyleSpecification {
         paint: { "line-color": c.water, "line-width": width([[10, 0.5], [16, 3]]) },
       },
 
-      // Byggnader: platta på medelzoom, låga 3D-block när man zoomar in.
+      // Byggnader: platta och svaga, från zoom 13.
       {
-        id: "building-flat",
+        id: "building",
         type: "fill",
         source: "omt",
         "source-layer": "building",
         minzoom: 13,
-        maxzoom: 14.5,
-        paint: { "fill-color": c.building, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 13.5, 1] as unknown as number },
+        paint: { "fill-color": c.building, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 13, 0, 14, 1] as unknown as number },
       },
 
       // Vägar: först kanter (casing), sedan vit fyllning ovanpå.
       ...roadLayers(c),
 
-      {
-        id: "building-3d",
-        type: "fill-extrusion",
-        source: "omt",
-        "source-layer": "building",
-        minzoom: 14,
-        paint: {
-          "fill-extrusion-color": c.buildingTop,
-          "fill-extrusion-opacity": 0.9,
-          // Låga byggnader: verklig höjd, max 24 m, skalad till 60 %. Växer fram mellan zoom 14 och 15,5.
-          "fill-extrusion-height": [
-            "interpolate", ["linear"], ["zoom"],
-            14, 0,
-            15.5, ["*", ["min", ["coalesce", ["get", "render_height"], 6], 24], 0.6],
-          ] as unknown as number,
-          "fill-extrusion-base": [
-            "interpolate", ["linear"], ["zoom"],
-            14, 0,
-            15.5, ["*", ["min", ["coalesce", ["get", "render_min_height"], 0], 24], 0.6],
-          ] as unknown as number,
-          "fill-extrusion-vertical-gradient": true,
-        },
-      },
-
       // Etiketter: få och lugna.
-      {
-        id: "water-name",
-        type: "symbol",
-        source: "omt",
-        "source-layer": "water_name",
-        minzoom: 11,
-        layout: {
-          "text-field": ["get", "name"] as unknown as string,
-          "text-font": FONT,
-          "text-size": 12,
-          "text-letter-spacing": 0.05,
-        },
-        paint: { "text-color": c.waterLabel, "text-halo-color": c.water, "text-halo-width": 1 },
-      },
       {
         id: "road-name",
         type: "symbol",
         source: "omt",
         "source-layer": "transportation_name",
-        minzoom: 14,
+        minzoom: 15,
         filter: isClass([...MAJOR, ...MEDIUM, "minor"]),
         layout: {
           "symbol-placement": "line",
@@ -229,12 +185,12 @@ export function mapStyle(): StyleSpecification {
         },
         paint: { "text-color": c.label, "text-halo-color": c.labelHalo, "text-halo-width": 1.5 },
       },
-      // Mörk ton över allt utanför Blekinge, och en kontur runt länet.
+      // Svag ton över allt utanför Blekinge, och en tunn kontur runt länet.
       {
         id: "outside-blekinge",
         type: "fill",
         source: "outside",
-        paint: { "fill-color": "#000000", "fill-opacity": 0.35 },
+        paint: { "fill-color": "#141312", "fill-opacity": 0.12 },
       },
       {
         id: "blekinge-outline",
@@ -242,9 +198,9 @@ export function mapStyle(): StyleSpecification {
         source: "blekinge",
         layout: { "line-join": "round" },
         paint: {
-          "line-color": "#000000",
-          "line-opacity": 0.7,
-          "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.5, 12, 2.5] as unknown as number,
+          "line-color": "#141312",
+          "line-opacity": 0.35,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1, 12, 1.5] as unknown as number,
         },
       },
     ],

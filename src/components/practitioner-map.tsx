@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import { KARLSKRONA_CENTER } from "@/lib/areas";
 import { BLEKINGE_BOUNDS, mapStyle } from "@/lib/map-style";
-import { SHOP_HEIGHT, Shop3D } from "@/lib/shop-3d";
 
 export type MapPoint = {
   slug: string;
@@ -21,34 +20,15 @@ export type MapInsets = { top: number; bottom: number; left: number; right: numb
 
 type MapLibreModule = typeof import("maplibre-gl");
 
-const PITCH = 20; // bara lite lutad: mest översikt, men husen får lite djup
-// Startvyn är aldrig mer utzoomad än så här (MapLibre-zoom, 512 px-rutor).
-// Mobilen har mindre synlig kartyta (sökfält + ark), därför lite lägre där.
-const MIN_START_ZOOM = { mobile: 12, desktop: 12.5 };
-const CORE_RADIUS_KM = 3; // utövare längre bort från mitten räknas inte med i startvyn
-// Vy när ett ställe väljs: inzoomad, lutad, och vriden "pyttelite på sidan".
-const FOCUS = { zoom: 16.6, pitch: 50, bearing: -12 };
-const PIN_HALF = 14; // halva höjden på en prislapp (px)
-const STEM = 12; // nålens spets under lappen (px)
-const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+// Luft runt prislapparna när kartan visar alla: marginal + en halv prislapp.
+const FIT_MARGIN = 32 + 22;
+const FIT_MS = 400;
 
-/** Avstånd i km mellan två punkter (räcker för korta avstånd). */
-function distanceKm(a: MapPoint, b: { lat: number; lng: number }) {
-  const dLat = (a.lat - b.lat) * 111;
-  const dLng = (a.lng - b.lng) * 111 * Math.cos((a.lat * Math.PI) / 180);
-  return Math.hypot(dLat, dLng);
-}
-
-/** Utövarna runt mitten (medianen) – ensamma långt bort lämnas utanför startvyn. */
-function corePoints(points: MapPoint[]): MapPoint[] {
-  const median = (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)];
-  const center = { lat: median(points.map((p) => p.lat)), lng: median(points.map((p) => p.lng)) };
-  const core = points.filter((p) => distanceKm(p, center) <= CORE_RADIUS_KM);
-  return core.length > 0 ? core : points;
-}
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // Interaktiv karta (MapLibre GL + OpenFreeMap, egen stil i lib/map-style.ts).
-// Nålarna är prislappar i Airbnb-stil: vita, runda, mjuk skugga. Vald = svart.
+// Platt 2D: ingen lutning, ingen rotation, inga 3D-hus. Kameran rör sig bara
+// när *vilka* ställen som visas ändras (fitKey) – aldrig när man väljer ett.
 export function PractitionerMap({
   points,
   selectedSlug,
@@ -56,24 +36,18 @@ export function PractitionerMap({
   onSelect,
   insets,
   showZoom,
-  overviewKey = 0,
-  onUserMove,
-  autoFit = true,
+  fitKey,
   label = "Karta över utövare",
 }: {
   points: MapPoint[];
   selectedSlug: string | null;
-  /** Lapp som markeras utan att kartan flyttar sig (t.ex. kortet man pekar på). */
+  /** Lapp som markeras utan att kartan flyttar sig (t.ex. raden man pekar på). */
   highlightSlug?: string | null;
   onSelect: (slug: string) => void;
   insets: MapInsets;
   showZoom: boolean;
-  /** Öka värdet för att flyga tillbaka till översikten (alla ställen). */
-  overviewKey?: number;
-  /** Anropas när användaren själv drar/zoomar i kartan. */
-  onUserMove?: () => void;
-  /** Visa alla ställen när listan med ställen ändras (av för förhandsvisningen). */
-  autoFit?: boolean;
+  /** När värdet ändras visar kartan alla ställen (första gången utan animation). */
+  fitKey: string;
   /** Tillgänglig beskrivning av kartan. */
   label?: string;
 }) {
@@ -82,53 +56,42 @@ export function PractitionerMap({
   const libRef = useRef<MapLibreModule | null>(null);
   const markersRef = useRef(new Map<string, Marker>());
   const onSelectRef = useRef(onSelect);
-  const onUserMoveRef = useRef(onUserMove);
   const insetsRef = useRef(insets);
   const selectedRef = useRef(selectedSlug);
   const pointsRef = useRef(points);
-  const shopRef = useRef<Shop3D | null>(null);
+  const fittedKeyRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
-    onUserMoveRef.current = onUserMove;
     insetsRef.current = insets;
     selectedRef.current = selectedSlug;
     pointsRef.current = points;
   });
 
-  // Startvy/översikt: inzoomad där flest utövare finns (inte hela kommunen).
-  const overviewCamera = useCallback(() => {
+  // Visa alla ställen, med luft så att ingen prislapp hamnar bakom sökfältet
+  // eller bottenarket. Kartans egen padding rörs aldrig.
+  const fitToPoints = useCallback((animated: boolean) => {
     const map = mapRef.current;
-    const points = pointsRef.current;
-    if (!map || points.length === 0) return null;
-    const i = insetsRef.current;
-    let padding = { top: i.top + 48, bottom: i.bottom + 48, left: i.left + 48, right: i.right + 48 };
-    // Lämna alltid minst 40 % av kartan fri – annars "får inte översikten plats"
-    // (t.ex. på mobilen när bottenarket är halvt uppe).
+    const lib = libRef.current;
+    const pts = pointsRef.current;
+    if (!map || !lib || pts.length === 0) return;
     const { clientWidth: w, clientHeight: h } = map.getContainer();
+    const i = insetsRef.current;
+    let padding = { top: i.top + FIT_MARGIN, bottom: i.bottom + FIT_MARGIN, left: i.left + FIT_MARGIN, right: i.right + FIT_MARGIN };
+    // Lämna alltid minst 40 % av kartan fri.
     const sy = Math.min(1, (h * 0.6) / (padding.top + padding.bottom));
     const sx = Math.min(1, (w * 0.6) / (padding.left + padding.right));
     padding = { top: padding.top * sy, bottom: padding.bottom * sy, left: padding.left * sx, right: padding.right * sx };
-    const core = corePoints(points);
-    if (core.length === 1) return { center: [core[0].lng, core[0].lat] as [number, number], zoom: 15, pitch: PITCH, bearing: 0, padding };
-    // Räkna själv (Web Mercator, 512 px-rutor) – cameraForBounds lägger på
-    // kartans nuvarande marginal och "får inte plats" efter en flygning.
-    const mx = (lng: number) => (lng + 180) / 360;
-    const my = (lat: number) => (1 - Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) / Math.PI) / 2;
-    const xs = core.map((p) => mx(p.lng));
-    const ys = core.map((p) => my(p.lat));
-    const dx = Math.max(1e-9, Math.max(...xs) - Math.min(...xs));
-    const dy = Math.max(1e-9, Math.max(...ys) - Math.min(...ys));
-    const availW = Math.max(1, w - padding.left - padding.right);
-    const availH = Math.max(1, h - padding.top - padding.bottom);
-    const fitZoom = Math.min(15.5, Math.log2(Math.min(availW / (dx * 512), availH / (dy * 512))));
-    const minZoom = w < 640 ? MIN_START_ZOOM.mobile : MIN_START_ZOOM.desktop;
-    const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
-    const cy = (Math.max(...ys) + Math.min(...ys)) / 2;
-    const lng = cx * 360 - 180;
-    const lat = (Math.atan(Math.sinh(Math.PI * (1 - 2 * cy))) * 180) / Math.PI;
-    return { center: [lng, lat] as [number, number], zoom: Math.max(fitZoom, minZoom), pitch: PITCH, bearing: 0, padding };
+    const bounds = new lib.LngLatBounds();
+    for (const p of pts) bounds.extend([p.lng, p.lat]);
+    map.fitBounds(bounds, {
+      padding,
+      maxZoom: pts.length === 1 ? 15 : 15.5,
+      duration: animated && !reducedMotion() ? FIT_MS : 0,
+      linear: true,
+      essential: true,
+    });
   }, []);
 
   // Prislappar som skulle krocka visas som en liten tom lapp tills man zoomar in.
@@ -154,30 +117,6 @@ export function PractitionerMap({
     }
   }, []);
 
-  // Den valda prislappen svävar över 3D-butiken: flytta upp den lika mycket
-  // som butikens tak syns ovanför marken (höjd × pixlar per meter × lutning).
-  const liftSelected = useCallback(() => {
-    const map = mapRef.current;
-    const shop = shopRef.current;
-    if (!map) return;
-    for (const [slug, marker] of markersRef.current) {
-      const el = marker.getElement();
-      if (slug !== selectedRef.current || !shop || shop.height < 0.3) {
-        if (el.classList.contains("is-lifted")) {
-          el.classList.remove("is-lifted");
-          marker.setOffset([0, 0]);
-        }
-        continue;
-      }
-      const lat = marker.getLngLat().lat;
-      const pxPerMeter = (512 * 2 ** map.getZoom()) / (40075016.686 * Math.cos((lat * Math.PI) / 180));
-      const roof = (shop.height + 2) * pxPerMeter * Math.sin((map.getPitch() * Math.PI) / 180);
-      const t = Math.min(1, shop.height / SHOP_HEIGHT); // nålen växer fram med butiken
-      marker.setOffset([0, -(roof + (PIN_HALF + STEM) * t)]);
-      el.classList.add("is-lifted");
-    }
-  }, []);
-
   // Skapa kartan en gång.
   useEffect(() => {
     let cancelled = false;
@@ -197,14 +136,16 @@ export function PractitionerMap({
           style: mapStyle(),
           center: [KARLSKRONA_CENTER.lng, KARLSKRONA_CENTER.lat],
           zoom: 12,
-          pitch: PITCH,
-          maxPitch: 75, // drönarflygningen flyger lågt mellan husen
-          // Mapsa finns bara i Blekinge än så länge.
-          maxBounds: BLEKINGE_BOUNDS,
-          minZoom: 8,
+          // Platt 2D: går inte att luta eller rotera.
+          pitch: 0,
+          maxPitch: 0,
+          bearing: 0,
           dragRotate: false,
           pitchWithRotate: false,
           touchPitch: false,
+          // Mapsa finns bara i Blekinge än så länge.
+          maxBounds: BLEKINGE_BOUNDS,
+          minZoom: 8,
           attributionControl: { compact: true },
         });
       } catch (err) {
@@ -215,8 +156,6 @@ export function PractitionerMap({
       map.keyboard.disableRotation();
       map.on("moveend", declutter);
       mapRef.current = map;
-      shopRef.current = new Shop3D(map, () => liftSelected());
-      map.on("move", () => liftSelected());
       // Bara under utveckling: gör kartan åtkomlig för felsökning i konsolen.
       if (process.env.NODE_ENV !== "production") (window as unknown as { __mapsaMap?: MapLibreMap }).__mapsaMap = map;
       resizeObserver = new ResizeObserver(() => map.resize());
@@ -231,8 +170,6 @@ export function PractitionerMap({
       // kontroller och lappar när kartan tas bort).
       const map = mapRef.current;
       mapRef.current = null;
-      shopRef.current?.dispose();
-      shopRef.current = null;
       try {
         markers.forEach((m) => m.remove());
         map?.remove();
@@ -242,7 +179,7 @@ export function PractitionerMap({
       markers.clear();
       setReady(false);
     };
-  }, [declutter, liftSelected]);
+  }, [declutter]);
 
   // Zoomknappar (bara desktop).
   useEffect(() => {
@@ -263,7 +200,7 @@ export function PractitionerMap({
     };
   }, [ready, showZoom]);
 
-  // Lappen för kortet man pekar på blir svart (som hos Airbnb), utan att kartan rör sig.
+  // Lappen för raden man pekar på blir mörk (som hos Airbnb), utan att kartan rör sig.
   useEffect(() => {
     for (const [slug, marker] of markersRef.current) {
       const el = marker.getElement();
@@ -321,108 +258,23 @@ export function PractitionerMap({
     declutter();
   }, [points, ready, declutter]);
 
-  // Visa alla ställen när *vilka* ställen som visas ändras (t.ex. nytt filter).
-  const slugKey = points.map((p) => p.slug).join("|");
+  // Visa alla ställen: första gången direkt, sedan kort och mjukt (~400 ms)
+  // när filter eller sökning ändrar vilka ställen som visas.
   useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map || !autoFit) return;
-    const camera = overviewCamera();
-    if (camera) map.jumpTo(camera);
-    declutter();
-  }, [slugKey, ready, autoFit, overviewCamera, declutter]);
+    if (!ready || fittedKeyRef.current === fitKey) return;
+    const first = fittedKeyRef.current === null;
+    fittedKeyRef.current = fitKey;
+    fitToPoints(!first);
+  }, [fitKey, ready, fitToPoints]);
 
-  // "Visa alla": flyg tillbaka upp till översikten.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map || overviewKey === 0) return;
-    const camera = overviewCamera();
-    if (!camera) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) map.jumpTo(camera);
-    else map.flyTo({ ...camera, duration: 1600, curve: 1.4, essential: true });
-  }, [overviewKey, ready, overviewCamera]);
-
-  // Säg till när användaren själv flyttar kartan (inte våra egna flygningar).
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map) return;
-    const onMove = (e: { originalEvent?: unknown }) => {
-      if (e.originalEvent) onUserMoveRef.current?.();
-    };
-    map.on("movestart", onMove);
-    return () => {
-      map.off("movestart", onMove);
-    };
-  }, [ready]);
-
-  // Vald lapp: svart och lite större.
+  // Vald lapp: mörk och lite större. Kartan rör sig inte.
   useEffect(() => {
     if (!ready) return;
     for (const [slug, marker] of markersRef.current) {
       marker.getElement().classList.toggle("is-active", slug === selectedSlug);
     }
-    liftSelected();
     declutter();
-  }, [selectedSlug, ready, points, declutter, liftSelected]);
-
-  // Valt ställe: kartan zoomar mjukt in och lägger sig lite på sidan, och en
-  // liten 3D-butik reser sig där stället ligger (lib/shop-3d.ts). Bara när
-  // valet eller dess läge ändras – inte när texten på lappen ändras.
-  const selected = points.find((p) => p.slug === selectedSlug);
-  const selLng = selected?.lng;
-  const selLat = selected?.lat;
-  useEffect(() => {
-    const map = mapRef.current;
-    const shop = shopRef.current;
-    if (!ready || !map || !shop) return;
-    let cancelled = false;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    // Inget valt: butiken sjunker ner och försvinner.
-    if (selLng === undefined || selLat === undefined) {
-      if (reduce) {
-        shop.set(0);
-        shop.clear();
-      } else shop.animate(0, 400, () => !cancelled && shop.clear());
-      liftSelected();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const i = insetsRef.current;
-    const padding = { top: i.top, bottom: i.bottom, left: i.left, right: i.right };
-    const center: [number, number] = [selLng, selLat];
-    const camera = { center, ...FOCUS, padding };
-    const rise = () => {
-      if (cancelled) return;
-      shop.place(selLng, selLat);
-      if (reduce) shop.set(SHOP_HEIGHT);
-      else shop.animate(SHOP_HEIGHT, 900);
-    };
-
-    if (reduce) {
-      map.jumpTo(camera);
-      shop.set(0);
-      rise();
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    // En tidigare butik sjunker snabbt medan kameran åker.
-    if (shop.height > 0) shop.animate(0, 300);
-    const from = map.getCenter();
-    const km = Math.hypot((from.lat - selLat) * 111, (from.lng - selLng) * 111 * Math.cos((selLat * Math.PI) / 180));
-    const duration = Math.min(3000, 1400 + km * 250);
-    if (km < 1.5) map.easeTo({ ...camera, duration, easing: easeInOutCubic, essential: true });
-    else map.flyTo({ ...camera, duration, curve: 1.2, essential: true });
-    // Butiken börjar resa sig när kameran nästan är framme.
-    const timer = setTimeout(rise, duration * 0.6);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [selectedSlug, selLng, selLat, ready, liftSelected]);
+  }, [selectedSlug, ready, points, declutter]);
 
   return <div ref={containerRef} role="region" aria-label={label} className="h-full w-full" />;
 }
