@@ -24,6 +24,8 @@ export type Stage = {
   width: number;
   height: number;
   reducedMotion: boolean;
+  /** Kamerans avstånd som andel av normalläget (1 = normalt, >1 = längre bort). */
+  zoom: number;
   dispose: () => void;
 };
 
@@ -58,7 +60,13 @@ export function createStage(container: HTMLElement, opts: StageOptions): Stage {
   sun.shadow.radius = 4;
   scene.add(sun);
 
-  const stage: Stage = { renderer, scene, camera, width: 1, height: 1, reducedMotion, dispose };
+  const stage: Stage = { renderer, scene, camera, width: 1, height: 1, reducedMotion, zoom: 1, dispose };
+
+  let fit = 1;
+  const placeCamera = () => {
+    camera.position.copy(target).addScaledVector(dir, opts.distance * fit * stage.zoom);
+    camera.lookAt(target);
+  };
 
   let raf = 0;
   let visible = false;
@@ -68,6 +76,7 @@ export function createStage(container: HTMLElement, opts: StageOptions): Stage {
   const render = (now: number) => {
     if (!started) started = now;
     opts.onFrame(reducedMotion ? 1000 : (now - started) / 1000, stage);
+    placeCamera();
     renderer.render(scene, camera);
   };
   const loop = (now: number) => {
@@ -87,9 +96,8 @@ export function createStage(container: HTMLElement, opts: StageOptions): Stage {
     stage.height = h;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
-    const fit = opts.fitAspect ? Math.max(1, opts.fitAspect / camera.aspect) : 1;
-    camera.position.copy(target).addScaledVector(dir, opts.distance * fit);
-    camera.lookAt(target);
+    fit = opts.fitAspect ? Math.max(1, opts.fitAspect / camera.aspect) : 1;
+    placeCamera();
     camera.updateProjectionMatrix();
     // Rita om direkt vid storleksändring (inte första gången – då är scenen inte byggd än).
     if (initialized && (!raf || reducedMotion)) render(performance.now());

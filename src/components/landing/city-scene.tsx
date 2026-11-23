@@ -8,7 +8,7 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import { createStage, easeOutBack, easeOutCubic, flatPatch, seeded, slab } from "./three-stage";
+import { createStage, easeOutCubic, flatPatch, seeded, slab } from "./three-stage";
 
 const C = {
   base: "#ffffff",
@@ -19,11 +19,15 @@ const C = {
   tree: "#9fd08a",
   treeDark: "#86c172",
   trunk: "#cbbfae",
-  buildings: ["#ffffff", "#f6f6f4", "#ecebe8"],
+  buildings: ["#cfcfcc", "#c4c4c1", "#b8b8b5"], // mörkgrå, lite olika nyanser
   pin: "#111111",
 };
 
 // Kartnålar: läge (x, z) och lapptext.
+const INTRO_S = 2.4; // längd på introt (sekunder)
+const ZOOM_FROM = 1.45; // kameran börjar så här mycket längre bort
+const RISE_FROM = 0.55; // husen börjar på så här stor andel av sin höjd
+
 const PINS = [
   { x: -2.35, z: -2.3, label: "650 kr" },
   { x: 0.0, z: -0.05, label: "400 kr" },
@@ -108,9 +112,9 @@ export default function CityScene({ accent = "#111111" }: { accent?: string }) {
             const mesh = new THREE.Mesh(geo, buildingMats[Math.floor(rand() * buildingMats.length)]);
             mesh.position.set(cx, 0, cz);
             mesh.castShadow = mesh.receiveShadow = true;
-            mesh.scale.y = 0.001;
+            mesh.scale.y = RISE_FROM;
             world.add(mesh);
-            buildings.push({ mesh, delay: Math.hypot(cx, cz) * 0.09 + rand() * 0.15 });
+            buildings.push({ mesh, delay: Math.hypot(cx, cz) * 0.04 });
           }
         }
       }),
@@ -137,7 +141,7 @@ export default function CityScene({ accent = "#111111" }: { accent?: string }) {
       trunk.castShadow = crown.castShadow = true;
       tree.add(trunk, crown);
       tree.position.set(x, 0, z);
-      tree.scale.setScalar(0.001);
+      tree.scale.setScalar(RISE_FROM);
       world.add(tree);
       trees.push({ obj: tree, delay: 0.5 + rand() * 0.5 });
     }
@@ -173,7 +177,7 @@ export default function CityScene({ accent = "#111111" }: { accent?: string }) {
       pin.add(head, tip, dot);
       const base = (pinTops.get(i) ?? 0.2) + 0.35;
       pin.position.set(p.x, base, p.z);
-      pin.scale.setScalar(0.001);
+      pin.scale.setScalar(0.85);
       world.add(pin);
       return { pin, base, phase: i * 1.3, mat: pinMat };
     });
@@ -203,19 +207,24 @@ export default function CityScene({ accent = "#111111" }: { accent?: string }) {
     function onFrame(t: number, s: typeof stage) {
       px += (tx - px) * 0.05;
       py += (ty - py) * 0.05;
-      world.rotation.y = -0.15 + Math.sin(t * 0.18) * 0.22 + px * 0.12;
-      world.rotation.x = py * 0.03;
+      // Intro: kameran zoomar mjukt in och husen reser sig lite – samma
+      // lugna kurva för allt, inga studsar.
+      const intro = easeOutCubic(t / INTRO_S);
+      s.zoom = 1 + (ZOOM_FROM - 1) * (1 - intro);
+      // Efteråt: staden vrider sig mycket långsamt, och följer pekaren lite.
+      world.rotation.y = -0.15 + Math.sin(t * 0.08) * 0.08 + px * 0.06;
+      world.rotation.x = py * 0.02;
 
-      for (const b of buildings) b.mesh.scale.y = Math.max(0.001, easeOutCubic((t - b.delay) / 0.9));
-      for (const tr of trees) tr.obj.scale.setScalar(Math.max(0.001, easeOutBack((t - tr.delay) / 0.6)));
-      const active = Math.floor(Math.max(0, t - 1.6) / 2.4) % PINS.length;
+      for (const b of buildings) b.mesh.scale.y = RISE_FROM + (1 - RISE_FROM) * easeOutCubic((t - b.delay) / INTRO_S);
+      for (const tr of trees) tr.obj.scale.setScalar(RISE_FROM + (1 - RISE_FROM) * intro);
+      const active = Math.floor(Math.max(0, t - INTRO_S) / 2.6) % PINS.length;
+      const pinsIn = easeOutCubic((t - INTRO_S * 0.6) / 0.8);
       pins.forEach(({ pin, base, phase, mat }, i) => {
-        mat.color.lerp(i === active ? accentColor : pinColor, 0.12);
-        const appear = easeOutBack((t - 1.0 - i * 0.12) / 0.6);
-        const grow = i === active ? 1.25 : 1;
-        pin.scale.setScalar(Math.max(0.001, appear * grow));
-        pin.position.y = base + 0.08 * Math.sin(t * 1.6 + phase) + (1 - easeOutCubic((t - 1.0 - i * 0.12) / 0.6)) * 1.2;
-        pin.rotation.y = t * 0.6 + phase;
+        mat.color.lerp(i === active ? accentColor : pinColor, 0.08);
+        const grow = i === active ? 1.15 : 1;
+        pin.scale.setScalar((0.85 + 0.15 * pinsIn) * grow);
+        pin.position.y = base + 0.03 * Math.sin(t * 1.1 + phase);
+        pin.visible = pinsIn > 0.01;
 
         // Prislappen ovanför nålen (HTML – skarp text).
         const pill = pills.current[i];
@@ -226,7 +235,7 @@ export default function CityScene({ accent = "#111111" }: { accent?: string }) {
         const x = (v.x * 0.5 + 0.5) * s.width;
         const y = (-v.y * 0.5 + 0.5) * s.height;
         pill.style.transform = `translate(-50%, -100%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${i === active ? 1.08 : 1})`;
-        pill.style.opacity = String(easeOutCubic((t - 1.3 - i * 0.12) / 0.4));
+        pill.style.opacity = String(pinsIn);
         pill.dataset.active = String(i === active);
         pill.style.zIndex = i === active ? "2" : "1";
       });
