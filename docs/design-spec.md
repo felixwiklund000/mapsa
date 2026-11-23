@@ -78,7 +78,7 @@ tills vidare (önskemål: färgerna var för mörka).
 - Prislappar som Airbnb (ändrat på önskemål): vit, helt rund, 28 px hög, 14 px / 600 svart text,
   mjuk skugga. Vald: svart med vit text, lite större. Lappar som krockar blir små tomma lappar.
   Kartans färger och lapparnas skugga är undantag från färg- och skuggreglerna ovan.
-- Klick på en rad i listan → "drönarflygning" (`lib/drone-flight.ts`): kameran sveper in lågt mellan husen (zoom 17,2, lutning 68°, vänd högst 70° mot färdriktningen, lätt rörelseoskärpa i farten), stiger sedan till drönarvy (zoom 15,8, lutning 50°, norr upp). Avbryts om man drar i kartan. Reducerad rörelse → hopp direkt.
+- Klick på en rad i listan → "drönarflygning" (`lib/drone-flight.ts`), en sammanhängande kamerabana: dyker ner till ~40 m över marken, susar fram lågt mellan husen (lutning 72°, lätt rörelseoskärpa i farten), drar sedan upp och fortsätter uppåt och framåt till drönarvy (zoom 15,8, lutning 50°). Kameran backar aldrig. Vrider högst 90° mot färdriktningen. Avbryts om man tar tag i kartan. Reducerad rörelse → hopp direkt.
 
 ## Profilsidan
 

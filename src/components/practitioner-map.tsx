@@ -118,7 +118,7 @@ export function PractitionerMap({
           center: [KARLSKRONA_CENTER.lng, KARLSKRONA_CENTER.lat],
           zoom: 12,
           pitch: PITCH,
-          maxPitch: 70, // drönarflygningen sveper in lågt
+          maxPitch: 75, // drönarflygningen flyger lågt mellan husen
           // Mapsa finns bara i Blekinge än så länge.
           maxBounds: BLEKINGE_BOUNDS,
           minZoom: 8,
