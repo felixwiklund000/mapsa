@@ -7,6 +7,7 @@ import { ArrowLeft, Clock, Mail, MapPin, Phone, Tag } from "lucide-react";
 import { Photo } from "@/components/photo";
 import { formatPrice } from "@/components/practitioner-row";
 import { SiteHeader } from "@/components/site-header";
+import { kommunFor } from "@/lib/areas";
 import { getCategory } from "@/lib/categories";
 import { getPublishedPractitionerBySlug } from "@/lib/db/practitioners";
 import { isExternalUrl, isValidBookingUrl, toVideoEmbedUrl } from "@/lib/urls";
@@ -21,7 +22,7 @@ export async function generateMetadata(props: PageProps<"/utovare/[slug]">): Pro
     title: `${p.name} – ${category?.name ?? ""} i ${p.area} | Mapsa`,
     description:
       p.description?.slice(0, 155) ??
-      `${p.name} i ${p.area}, Karlskrona. Se tjänster, priser och boka direkt hos utövaren.`,
+      `${p.name} i ${p.area}, ${kommunFor(p.area)}. Se tjänster, priser och boka direkt hos utövaren.`,
     robots: p.isTestData ? { index: false } : undefined,
   };
 }
@@ -83,8 +84,8 @@ async function Profile({ params }: { params: PageProps<"/utovare/[slug]">["param
 
           <ul className="mt-6">
             <InfoRow icon={<MapPin className="size-5" aria-hidden />} label="Adress">
-              {p.address ? `${p.address}, ` : ""}
-              {p.area}, Karlskrona
+              {p.address ? `${p.address}, ` : `${p.area}, `}
+              {kommunFor(p.area)}
             </InfoRow>
             {p.openingHours && (
               <InfoRow icon={<Clock className="size-5" aria-hidden />} label="Öppettider">

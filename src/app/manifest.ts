@@ -5,10 +5,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Mapsa – lokala utövare i Karlskrona",
+    name: "Mapsa – lokala utövare i Blekinge",
     short_name: "Mapsa",
     description:
-      "Hitta och jämför massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet i Karlskrona.",
+      "Hitta och jämför massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet i Blekinge.",
     lang: "sv",
     start_url: "/",
     scope: "/",

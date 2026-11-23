@@ -14,7 +14,7 @@ import { filterPractitioners, parseFilters, type Filters } from "@/lib/search";
 export default function Home(props: PageProps<"/">) {
   return (
     <main className="flex-1">
-      <h1 className="sr-only">Massage, PT, frisör och mer i Karlskrona</h1>
+      <h1 className="sr-only">Massage, PT, frisör och mer i Blekinge</h1>
       <Suspense fallback={<HomeFallback />}>
         <HomeContent searchParams={props.searchParams} />
       </Suspense>

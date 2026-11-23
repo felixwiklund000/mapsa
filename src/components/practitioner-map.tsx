@@ -4,7 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import { KARLSKRONA_CENTER } from "@/lib/areas";
-import { mapStyle } from "@/lib/map-style";
+import { BLEKINGE_BOUNDS, mapStyle } from "@/lib/map-style";
 
 export type MapPoint = {
   slug: string;
@@ -118,6 +118,9 @@ export function PractitionerMap({
           zoom: 12,
           pitch: PITCH,
           maxPitch: 60,
+          // Mapsa finns bara i Blekinge än så länge.
+          maxBounds: BLEKINGE_BOUNDS,
+          minZoom: 8,
           dragRotate: false,
           pitchWithRotate: false,
           touchPitch: false,

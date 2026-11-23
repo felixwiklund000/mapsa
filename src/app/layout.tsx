@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mapsa – hitta lokala utövare i Karlskrona",
+  title: "Mapsa – hitta lokala utövare i Blekinge",
   description:
-    "Hitta och jämför massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet i Karlskrona. Du bokar direkt hos utövaren.",
+    "Hitta och jämför massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet i Blekinge. Du bokar direkt hos utövaren.",
   applicationName: "Mapsa",
   // iPhone: "Lägg till på hemskärmen" öppnar Mapsa som en egen app.
   appleWebApp: {

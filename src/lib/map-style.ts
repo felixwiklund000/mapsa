@@ -4,6 +4,7 @@
 // schema OpenMapTiles. Se docs/design-spec.md, avsnittet Kartan.
 
 import type { StyleSpecification } from "maplibre-gl";
+import blekinge from "./blekinge-geo.json";
 
 const SOURCE = "https://tiles.openfreemap.org/planet";
 const GLYPHS = "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf";
@@ -64,7 +65,12 @@ export function mapStyle(): StyleSpecification {
   return {
     version: 8,
     glyphs: GLYPHS,
-    sources: { omt: { type: "vector", url: SOURCE } },
+    sources: {
+      omt: { type: "vector", url: SOURCE },
+      // Blekinge: kontur och mask (scripts/build-blekinge-geo.ts)
+      blekinge: { type: "geojson", data: blekinge.region as never },
+      outside: { type: "geojson", data: blekinge.mask as never },
+    },
     // Mjukt ljus på byggnaderna (svag skugga på ena sidan).
     light: { anchor: "viewport", color: "#ffffff", intensity: 0.3, position: [1.3, 210, 35] },
     layers: [
@@ -223,9 +229,30 @@ export function mapStyle(): StyleSpecification {
         },
         paint: { "text-color": c.label, "text-halo-color": c.labelHalo, "text-halo-width": 1.5 },
       },
+      // Mörk ton över allt utanför Blekinge, och en kontur runt länet.
+      {
+        id: "outside-blekinge",
+        type: "fill",
+        source: "outside",
+        paint: { "fill-color": "#000000", "fill-opacity": 0.35 },
+      },
+      {
+        id: "blekinge-outline",
+        type: "line",
+        source: "blekinge",
+        layout: { "line-join": "round" },
+        paint: {
+          "line-color": "#000000",
+          "line-opacity": 0.7,
+          "line-width": ["interpolate", ["linear"], ["zoom"], 7, 1.5, 12, 2.5] as unknown as number,
+        },
+      },
     ],
   };
 }
+
+/** Kartan får inte visa mer än Blekinge med omnejd. [väst, syd, öst, nord] */
+export const BLEKINGE_BOUNDS = blekinge.bounds as [number, number, number, number];
 
 function roadLayers(c: Palette): StyleSpecification["layers"] {
   const roads: [string, string[], [number, number][], number][] = [
