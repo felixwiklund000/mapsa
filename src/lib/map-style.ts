@@ -38,8 +38,8 @@ const LIGHT: Palette = {
   road: "#ffffff",
   roadCasing: "#e2e3df",
   path: "#e8e9e5",
-  building: "#e6e6e4",
-  buildingTop: "#e9e9e7",
+  building: "#c4c4c1", // mörkgrå
+  buildingTop: "#9d9d9a", // mörkgrå 3D-hus
   label: "#6b6b6b",
   labelHalo: "#ffffff",
   waterLabel: "#4a86b5",

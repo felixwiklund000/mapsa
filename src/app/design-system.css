@@ -227,6 +227,39 @@ body {
   color: #ffffff;
   transform: scale(1.12);
 }
+/* Vald lapp svävar över den lilla 3D-butiken (practitioner-map.tsx):
+   en spets ner mot taket och en mjuk gungning. */
+.mapsa-marker.is-lifted::after {
+  content: "";
+  position: absolute;
+  top: calc(100% - 2px);
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 12px solid #000000;
+  transform: translateX(-50%);
+  animation: mapsa-float 2.4s ease-in-out infinite;
+}
+.mapsa-marker.is-lifted .mapsa-pin {
+  animation: mapsa-float 2.4s ease-in-out infinite;
+}
+@keyframes mapsa-float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mapsa-marker.is-lifted::after,
+  .mapsa-marker.is-lifted .mapsa-pin {
+    animation: none;
+  }
+}
 /* Krockar lappen med en annan visas en liten tom lapp (som Airbnb). */
 .mapsa-pin.is-dot {
   width: 20px;
