@@ -6,22 +6,17 @@ import { CategoryFilter } from "@/components/category-filter";
 import { HomeShell, type ShellItem } from "@/components/home-shell";
 import { formatPrice, lowestPrice, PractitionerRow } from "@/components/practitioner-row";
 import { SearchBar } from "@/components/search-bar";
-import { START_HIDE_SCRIPT, StartHero } from "@/components/start-hero";
-import { brandFonts } from "./foretag/fonts";
 import { getCategory, type CategorySlug } from "@/lib/categories";
 import { listPublishedPractitioners, type Practitioner } from "@/lib/db/practitioners";
 import { filterPractitioners, parseFilters, type Filters } from "@/lib/search";
 import { isExternalUrl, isValidBookingUrl } from "@/lib/urls";
 
-// Startsida: karta + lista. Layouten finns i HomeShell.
+// Startsida: kartan och listan direkt (ingen startvy). Layouten finns i HomeShell.
 
 export default function Home(props: PageProps<"/">) {
   return (
-    <main className={`flex-1 ${brandFonts}`}>
+    <main className="flex-1">
       <h1 className="sr-only">Massage, PT, frisör och mer i Blekinge</h1>
-      {/* Döljer startheron direkt för återkommande besökare (innan React laddat). */}
-      <script dangerouslySetInnerHTML={{ __html: START_HIDE_SCRIPT }} />
-      <StartHero />
       <Suspense fallback={<HomeFallback />}>
         <HomeContent searchParams={props.searchParams} />
       </Suspense>

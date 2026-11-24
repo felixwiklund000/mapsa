@@ -13,14 +13,14 @@ export function formatPrice(sek: number): string {
 
 // Rad i listan (som Ubers rader för bilval): 80 px hög, bild 64×64,
 // titel 16/600, "Massage · Trossö" 14 grå, "fr. 395 kr" 16/600 till höger.
-// data-slug kopplar raden till nålen på kartan; .is-selected sätts av HomeShell.
+// data-slug kopplar raden till prislappen på kartan (HomeShell öppnar kortet vid klick).
 export function PractitionerRow({ practitioner: p }: { practitioner: Practitioner }) {
   const price = lowestPrice(p);
   return (
     <Link
       href={`/utovare/${p.slug}`}
       data-slug={p.slug}
-      className="pressable -mx-2 flex h-20 items-center gap-4 rounded-lg px-2 hover:bg-fill [&.is-selected]:bg-fill [&.is-selected]:ring-2 [&.is-selected]:ring-ink [&.is-selected]:ring-inset"
+      className="pressable -mx-2 flex h-20 items-center gap-4 rounded-lg px-2 hover:bg-fill"
     >
       <Photo src={p.images[0]?.path} alt={p.name} category={p.category} className="size-16 shrink-0 rounded-lg" />
       <div className="min-w-0 flex-1">

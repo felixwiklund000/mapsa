@@ -46,7 +46,7 @@ export function LivePreview({ fields, className = "" }: { fields: SignupFields; 
         />
         {!placed && (
           <p className="pointer-events-none absolute inset-x-0 top-3 mx-auto w-fit rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-panel shadow-[0_2px_10px_rgb(0_0_0/0.12)]">
-            Din prislapp landar här när du valt adress
+            Din prislapp visas här när du valt adress
           </p>
         )}
       </div>

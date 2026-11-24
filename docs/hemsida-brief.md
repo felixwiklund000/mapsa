@@ -2,6 +2,8 @@
 
 Lägg filen i repot som `docs/hemsida-brief.md`. Claude Code ska läsa den innan varje steg.
 
+> **Kartan är platt 2D – inga 3D-effekter eller kamerafärder.** Det ersätter allt som tidigare stod här om 3D, drönarflygning, pitch, kamerarotation och kamera-animationer (se avsnitt 4). 3D-staden finns bara kvar som illustration på `/foretag`.
+
 ---
 
 ## 1. Mål
@@ -33,14 +35,29 @@ Ta bort: nuvarande flikar (Kartan/Profilen/Statistik/Bokning), statistikraden (6
 
 ## 4. `/` – kundsidan
 
-Inga marknadsföringssektioner. Bara produkten.
+Inga marknadsföringssektioner. Bara produkten. Minimalistiskt: kunden ser prislappar, trycker på en och kan boka. Från öppnad sida till bokning: högst 2 tryck (prislapp → Boka).
 
-- **Första besöket:** helskärm med illustrationen av skärgården. Mitt i bilden: sökrutan *"Vad letar du efter?"* och knappar under: Frisör · Massage · PT · Naprapat · Skönhet.
-- **När man söker eller trycker på en knapp:** illustrationen tonar bort och kameran flyger ner i den riktiga 3D-kartan (pitch ~60°). Prislapparna poppar upp en i taget.
-- **Tryck på en prislapp:** ett litet kort dyker upp ovanför bottenpanelen med bild, namn, pris och **Boka**. Kameran flyger in mot platsen.
-- **Bottenpanelen:** ska aldrig täcka prislapparna. Använd `fitBounds` med `padding.bottom` = panelens höjd.
+- **Kartan visas direkt.** Ingen startvy med illustration. Sökrutan *"Vad letar du efter?"* ligger överst.
+- **Platt 2D:** pitch 0 och bearing 0. Kartan går inte att luta eller rotera. Inga 3D-hus, ingen terräng och ingen himmel. Man kan panorera och zooma.
+- **Lugn kartstil:** dämpade färger i sidans toner, inga POI-ikoner och få etiketter (orter, stadsdelar och gatunamn när man zoomat in).
+- **Kameran rör sig bara när:**
+  1. sidan öppnas: `fitBounds` till alla utövare som visas, utan animation.
+  2. filter eller sökning ändras: `fitBounds`, cirka 400 ms.
+  3. man trycker på ett kluster: zoom in tills klustret delas, cirka 400 ms.
+  4. man väljer en utövare: ingen zoom och ingen flygning. Bara ett kort `panBy` (cirka 300 ms) om lappen annars hamnar bakom kortet eller sökrutan.
+
+  Padding räknas från sökrutans och bottenpanelens verkliga höjd, så att ingen prislapp hamnar bakom dem. Vid `prefers-reduced-motion` är alla tider 0.
+- **Prislappar:** en liten pill, "250 kr", i accentfärgen. Vald lapp är mörk och lite större. Överlappande lappar slås ihop till ett kluster med antalet. Tryckytan är minst 44×44 px. Inget annat ritas på kartan.
+- **Tryck på en prislapp eller en rad i listan:** lappen markeras och ett kompakt kort ersätter listan.
+  - Kortet visar bild (eller kategori-ikon på färgad bakgrund), namn, kategori · område och "fr. 250 kr".
+  - **Boka ↗** öppnas i ny flik. "Mer info" leder till `/utovare/[slug]`.
+  - Kortet stängs med tryck på kartan, ✕ eller svep nedåt.
+  - Adressen blir `/?vald=<slug>`, som går att dela, men kameran rör sig inte.
+- **Bottenpanelen (mobil):** ihopfälld som standard med "N utövare" och kategoriknapparna, högst cirka 40 % av höjden. Dra upp för hela listan.
+- **Dator (≥ 1024 px):** en panel till vänster på cirka 380 px. Kortet visas i samma panel, och det finns ingen bottenpanel.
+- **Filter:** bara kategoriknappar.
+- **Laddning:** en laddvy i sidans färger tills kartan har laddat. Aldrig en grå karta.
 - **Meny:** en liten länk "För företag".
-- Återkommande besökare (localStorage, inom try/catch) hoppar över illustrationen och landar direkt i kartan.
 
 ---
 
@@ -53,7 +70,7 @@ Inga marknadsföringssektioner. Bara produkten.
 >
 > [ Lägg upp ditt företag ]  ·  *Gratis att komma igång*
 
-- Bakgrund: illustrationen (samma värld som på `/`).
+- Bakgrund: illustrationen (bara här – `/` visar kartan direkt).
 - Under knappen, i liten text: "Ett UF-företag från Karlskrona".
 
 ### Akt 2 – Berättelsen från kundens håll (scroll-styrd, 3 scener)
@@ -61,7 +78,7 @@ Inga marknadsföringssektioner. Bara produkten.
 Sektionen är klistrad (sticky), och kartan i bakgrunden ändras när man scrollar. En kort mening per scen.
 
 1. **"Hon söker 'frisör' i Karlskrona."** Sökrutan skrivs i automatiskt.
-2. **"Hon ser alla frisörer, med priserna."** Kameran flyger ner, prislapparna poppar upp.
+2. **"Hon ser alla frisörer, med priserna."** Kartan visar frisörerna och prislapparna poppar upp.
 3. **"Hon bokar hos dig, i systemet du redan har."** En prislapp markeras, kortet öppnas, Boka-knappen pulserar. Under: *Bokadirekt, Fresha, egen hemsida, telefon eller Instagram. 0 % provision.*
 
 Det här ersätter "Så funkar det", "Funktioner" och flikarna. Allt de försökte säga visas här.
@@ -79,7 +96,7 @@ Formuläret i steg, med förhandsvisningen som uppdateras direkt:
 | Steg | Fält | Det som händer i förhandsvisningen |
 |---|---|---|
 | 1 | Företagsnamn, kategori | Kortet får namn och kategori |
-| 2 | Adress (med förslag) | Kartan flyger dit, prislappen landar |
+| 2 | Adress (med förslag) | Kartan visar adressen och prislappen dyker upp där |
 | 3 | Din billigaste tjänst + pris | Prislappen visar "fr. 250 kr" |
 | 4 | Bokningslänk (eller telefon) | Boka-knappen blir aktiv |
 | 5 | Ditt namn, mejl, telefon | — |
@@ -118,7 +135,7 @@ Formuläret i steg, med förhandsvisningen som uppdateras direkt:
 
 ## 8. Julmarknaden
 
-- `/?visning=1`: helskärm, inga menyer. Efter 20 sekunder utan att någon rör skärmen flyger kameran runt Karlskrona i en loop och visar prislappar. Vid beröring: vanlig karta.
+- `/?visning=1`: helskärm, inga menyer. Kartan står still, utan kameraloop. Efter 20 sekunder utan att någon rör skärmen öppnas kortet för utövarna, en i taget. Vid beröring: vanlig karta.
 - QR-koder pekar på `/?ref=julmarknad` och `/foretag?ref=julmarknad`. `ref` sparas med anmälan.
 
 ## 9. Prestanda
@@ -157,7 +174,7 @@ Formuläret i steg, med förhandsvisningen som uppdateras direkt:
    > Bygg akt 3 i briefen: anmälningsformuläret i steg med live-förhandsvisning på kartan, Supabase-tabellen `ansokningar` med RLS, server action med validering och honeypot, och `/foretag/tack`. Återanvänd den befintliga kartkomponenten. Visa skärmdumpar i 375 px och 1440 px när du är klar.
 
 3. **Kartan: fixa grunderna**
-   > Enligt avsnitt 4, 7 och 9 i briefen: laddskärm i stället för grå karta, `fitBounds` med padding så att bottenpanelen inte täcker prislapparna, orange prislappar, kortet som dyker upp vid tryck på en prislapp, och fallback i stället för grå bildrutor.
+   > Enligt avsnitt 4, 7 och 9 i briefen: platt 2D-karta (ingen 3D, ingen lutning eller rotation), laddskärm i stället för grå karta, `fitBounds` med padding så att bottenpanelen inte täcker prislapparna, orange prislappar med kluster, kortet som ersätter listan vid tryck på en prislapp (prislapp → Boka = 2 tryck), och fallback i stället för grå bildrutor.
 
 4. **Ny struktur för /foretag**
    > Bygg om /foretag enligt avsnitt 5: akt 1, akt 2 som tre stilla scener (ingen scroll-animation än), akt 3 (redan klar), och förtroendesektionerna. Ta bort det som står under "Ta bort" i avsnitt 3.
@@ -166,4 +183,4 @@ Formuläret i steg, med förhandsvisningen som uppdateras direkt:
    > Bygg visningsläget och `?ref=`-spårningen enligt avsnitt 8.
 
 6. **Grädden på moset (om tiden räcker)**
-   > Gör akt 2 scroll-styrd med en klistrad karta som ändras mellan de tre scenerna, och lägg in illustrationen som hero på `/` och `/foretag`. Respektera `prefers-reduced-motion`.
+   > Gör akt 2 scroll-styrd med en klistrad karta som ändras mellan de tre scenerna (inga kamerafärder), och lägg in illustrationen som hero på `/foretag`. På `/` visas kartan direkt. Respektera `prefers-reduced-motion`.

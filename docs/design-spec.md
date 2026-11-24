@@ -42,7 +42,8 @@ Skärmdumparna är från en iPhone (1179 px bred = 393 pt, 3 px per pt).
 | `line` (linjer) | `#E8E8E8` | `#2A2A2A` |
 | `muted` (sekundärtext) | `#6B6B6B` | `#949494` (inverterad `#6B6B6B`) |
 
-Inga kategorifärger, inga färgprickar, ingen accentfärg. Appen är alltid ljus – mörkt läge är avstängt
+Accentfärgen (`#ff5a1f`) används bara på prislapparna på kartan. Kategorifärger bara som ljus bakgrund
+bakom kategori-ikonen när foto saknas. Inga färgprickar. Appen är alltid ljus – mörkt läge är avstängt
 tills vidare (önskemål: färgerna var för mörka).
 
 ## Mått
@@ -58,53 +59,66 @@ tills vidare (önskemål: färgerna var för mörka).
 
 - Ingen header. Kartan fyller hela skärmen.
 - Sökfält överst, flytande (se uppmätta värden). Ikon + "Vad letar du efter?".
-- Områdesväljaren ligger bland filtren (som ett chip), inte i sökfältet.
-- Bottenark: dras mellan **25 % / 50 % / 90 %** av skärmhöjden med fjäder (motion).
+- Bottenark med två lägen: **ihopfällt** (standard: handtag, "N utövare" och kategoriknapparna,
+  uppmätt, högst 40 % av höjden) och **90 %** (hela listan). Dras med fjäder (motion).
 - Rubrik i arket: "7 utövare", 18 px / 600. Ingen underrubrik.
-- Chips: höjd 36 px, `fill`, svart text 14 px / 600, radie 8 px. Vald = svart bakgrund, vit text.
-  Ingen ikon, ingen prick (undantag: områdeschipet har en pil, eftersom det öppnar en lista).
+- Filter: bara kategoriknappar (inget områdesfilter). Höjd 36 px, `fill`, svart text 14 px / 600,
+  radie 8 px. Vald = svart bakgrund, vit text. Ingen ikon, ingen prick.
+- Vald utövare: ett kompakt kort ersätter listan i arket (bild 64 px, namn, "Frisör · Trossö",
+  "fr. 250 kr", **Boka ↗** och "Mer info"). Stängs med ✕, tryck på kartan, Esc eller svep nedåt.
 - Listrader: höjd 80 px, bild 64×64 med 8 px radie, titel 16 px / 600, "Massage · Trossö"
   14 px `muted`, pris till höger på en rad: "fr. 395 kr" 16 px / 600. Inga linjer, 8 px luft.
 
 ## Startsidan, desktop
 
-- Panel till vänster (ca 55 %: logga, sök, rubrik, chips, kortlista), karta till höger.
-- Kortlista som Airbnb: två kolumner, bild 4:3 med 12 px radie (undantag från 8 px), namn 16/600,
-  "Massage · Trossö" 14 grå, "fr. 395 kr" 16/600. Pekar man på ett kort blir lappen på kartan svart.
+- Panel till vänster, 380 px (logga, "För företag", meny, sök, rubrik, kategoriknappar, lista
+  med samma rader som på mobil), karta till höger. Inget bottenark.
+- Pekar man på en rad blir lappen på kartan mörk. Vald utövare: kortet visas i samma panel.
 
 ## Kartan
 
 - MapLibre GL med kartdata från OpenFreeMap (gratis, ingen API-nyckel) och egen stil i
-  `src/lib/map-style.ts`: ljusgrå mark, vita vägar med tunn grå kant, mjukt blått vatten,
-  dämpat grönt, grå byggnader. Alltid ljus.
-- Låga byggnader i 3D från zoom 14 (verklig höjd, max 24 m, skalad till 60 %), kartan lutar 45°.
-  Ingen rotation.
-- Få etiketter: stadsdelar i versaler 12 px, gatunamn 12 px från zoom 14.
-- Prislappar som Airbnb (ändrat på önskemål): vit, helt rund, 28 px hög, 14 px / 600 svart text,
-  mjuk skugga. Vald: svart med vit text, lite större. Lappar som krockar blir små tomma lappar.
-  Kartans färger och lapparnas skugga är undantag från färg- och skuggreglerna ovan.
-- Klick på en rad i listan → "drönarflygning" (`lib/drone-flight.ts`), en sammanhängande kamerabana: (1) ner – dyker till ~40 m över marken och vänder sig samtidigt mot målet i en enda mjuk sväng, (2) rakt mot målet lågt mellan husen (lutning 72°, lätt rörelseoskärpa), (3) upp – stiger och tittar ner på stället (lutning 40°, minst 300 m upp). Ingen rotation efter dykningen, kameran backar aldrig. Avbryts om man tar tag i kartan. Reducerad rörelse → hopp direkt.
+  `src/lib/map-style.ts`: varm ljus mark, vita vägar med tunn kant, dämpat blått vatten,
+  dämpat grönt, platta ljusa hus från zoom 13. Alltid ljus.
+- **Platt 2D:** pitch 0, bearing 0, `maxPitch: 0`. Går inte att luta eller rotera (mus,
+  pekskärm eller tangentbord). Inga 3D-hus, ingen terräng, ingen himmel.
+- Få etiketter: orter, stadsdelar i versaler 12 px, gatunamn från zoom 15. Inga POI-ikoner.
+- Prislappar: liten pill "250 kr" i accentfärgen (`#ff5a1f`, vit text 13 px / 600), tryckyta minst
+  44×44 px. Vald: mörk (`#141312`) och 12 % större. Lappar som överlappar på skärmen slås ihop till
+  ett kluster (vit rund lapp med orange ring och antalet). Längst in (zoom 18) läggs utövare på samma
+  adress bredvid varandra. Det som skulle hamna under den valda lappen flyttas precis bredvid den.
+- Kameran rör sig bara (1) vid start: `fitBounds` utan animation, (2) när filter eller sökning
+  ändras: `fitBounds` 400 ms, (3) vid tryck på ett kluster: zoom in tills det delas, 400 ms,
+  (4) när vald lapp annars skulle döljas av kortet eller sökfältet: `panBy` 300 ms. Aldrig zoom
+  eller flygning vid val. Padding = sökfältets och arkets uppmätta höjd. Reducerad rörelse → 0 ms.
+- Laddvy i kartans ljusa ton med Mapsa-symbolen och "Laddar kartan…" tills kartan har laddat
+  (tonar bort på 200 ms). Utan WebGL: "Kartan kunde inte laddas" – listan fungerar ändå.
 
 ## Profilsidan
 
-- Bild överst i full bredd: 4:3 på mobil, 16:9 på desktop. Tillbakaknapp: vit cirkel 40 px uppe till vänster.
-- Namn 24 px / 700 (32 px desktop). Under: "Massage · Trossö" 16 px `muted`.
-- Beskrivning 16 px, max 65 tecken per rad.
-- Inforader (adress, öppettider, kontakt): ikon 20 px + text 16 px, höjd 56 px.
-- Tjänster: namn till vänster, "50 min" grå under, pris till höger.
-- Boka-knapp: svart, höjd 56 px, radie 8 px, 18 px / 600 vit text, full bredd, sticky längst ner på mobil.
-  Desktop: i en kolumn till höger, ingen ruta runt.
+- En kolumn (max ca 720 px), även på desktop. Tillbakaknapp: `fill`-cirkel 40 px överst.
+- Bild bara om den finns: 16:9 med 12 px radie. Ingen tom bildyta.
+- Ordning: namn 24 px / 700 (36 px desktop), "Massage · Trossö" 16 px `muted`, "fr. 395 kr"
+  18 px / 600, **Boka**, tjänster, adress och öppettider, telefon, e-post, erbjudande,
+  beskrivning ("Om …", max 65 tecken per rad), video.
+- Boka-knapp: svart, höjd 56 px, radie 8 px, 18 px / 600 vit text, full bredd på mobil (auto på
+  större skärm). Ligger i flödet – inte fast längst ner – och tar inte emot tryck de första 600 ms
+  (skydd mot dubbeltryck från kortets "Mer info").
+- Inforader: ikon 20 px + text 16 px, höjd 56 px. Tjänster: namn till vänster, "50 min" grå under,
+  pris till höger.
 
 ## Bilder
 
 - Foton bara med företagets tillåtelse, samma beskärning (4:3, 1200×900, `npm run photos`).
-  Ingen bokstav eller ikon i stället för bild – saknas foto syns en tom `fill`-yta.
+  Saknas foto (eller går det inte att ladda) visas kategorins ikon på en ljus färgad bakgrund –
+  aldrig en grå ruta.
 
 ## Rörelse
 
 - 200 ms ease-out på hover/tryck. Tryck = `scale(0.98)`.
 - Skelett när listan laddar.
 - `prefers-reduced-motion`: inga övergångar, arket och kartan hoppar direkt i stället för att glida.
+- Kartan har inga kamerafärder, ingen lutning och ingen rotation (se Kartan).
 
 ## Städat bort
 

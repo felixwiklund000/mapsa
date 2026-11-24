@@ -599,7 +599,7 @@ function AddressField({
         </p>
       ) : (
         <p className="mt-2 text-sm text-stone">
-          {unavailable ? "Adressförslagen svarar inte just nu." : noHits ? "Hittade ingen sådan adress i Blekinge." : "Skriv och välj i listan – kartan flyger dit."}
+          {unavailable ? "Adressförslagen svarar inte just nu." : noHits ? "Hittade ingen sådan adress i Blekinge." : "Skriv och välj i listan – kartan visar var den ligger."}
         </p>
       )}
 

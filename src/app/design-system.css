@@ -308,7 +308,7 @@ body {
   --text-stat--letter-spacing: -0.04em;
 }
 
-/* Prislapp ovanför 3D-nålarna – samma lapp som på kartan, lite större. */
+/* Prislapp ovanför nålarna i 3D-illustrationen på /foretag (inte kartan). */
 .landing-pill {
   position: absolute;
   left: 0;
@@ -407,12 +407,6 @@ body {
   .site-menu-panel {
     animation: none;
   }
-}
-
-/* ---------- Startheron (start-hero.tsx) ---------- */
-/* Återkommande besökare: dold innan React laddat (skript i page.tsx). */
-html[data-start="dold"] .start-hero {
-  display: none;
 }
 
 /* ---------- /foretag, akt 2 ---------- */
