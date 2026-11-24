@@ -16,12 +16,15 @@ import { PricePill } from "../price-pill";
 import { SearchBarPreview } from "../search-bar";
 import { SelectedCard, type CardItem } from "../selected-card";
 import { POSTER, POSTER_PINS } from "./poster";
+import { can3D, SceneLoader } from "./scene-loader";
 
 export type StoryPill = { slug: string; label: string };
 
 export const STEPS = ["Sök det du letar efter.", "Se alla priser direkt.", "Boka där de redan tar bokningar."];
 const QUERY = "frisör";
 const DESKTOP = "(min-width: 1024px)";
+
+const noSubscribe = () => () => {};
 
 /** En mediefråga som följs live (servern antar `server`). */
 function useMedia(query: string, server: boolean): boolean {
@@ -39,7 +42,10 @@ function useMedia(query: string, server: boolean): boolean {
 export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill[]; card: CardItem | null }) {
   const isDesktop = useMedia(DESKTOP, true);
   const reduced = useMedia("(prefers-reduced-motion: reduce)", false);
-  const mode = reduced ? "cards" : "story";
+  const capable = useSyncExternalStore(noSubscribe, can3D, () => true);
+  // Utan 3D (reducerad rörelse, ingen WebGL, svag enhet): stillbild och kort.
+  const mode = reduced || !capable ? "cards" : "story";
+  const [sceneReady, setSceneReady] = useState(false);
   const [stage, setStage] = useState(0);
   const [typed, setTyped] = useState(0);
   const progress = useRef(0);
@@ -106,10 +112,21 @@ export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill
       {/* Ön: ligger kvar medan texten scrollar förbi */}
       <div className="sticky top-0 z-10 h-[56dvh] bg-sand lg:order-2 lg:z-0 lg:h-dvh">
         <div className="relative h-full overflow-hidden">
-          <Poster />
+          <div className={`absolute inset-0 transition-opacity duration-700 ${sceneReady ? "opacity-0" : ""}`}>
+            <Poster />
+          </div>
+          <SceneLoader
+            progress={progress}
+            stage={stage}
+            pills={shown}
+            selectedSlug={selectedSlug}
+            isDesktop={isDesktop}
+            onReady={() => setSceneReady(true)}
+          />
 
-          {/* Prislapparna ovanför husen */}
+          {/* Prislapparna ovanför husen (på stillbilden – i 3D ritar scenen dem) */}
           {stage >= 2 &&
+            !sceneReady &&
             shown.map((pill, i) => {
               const at = posterPins[i];
               if (!at) return null;
