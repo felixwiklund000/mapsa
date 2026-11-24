@@ -1,7 +1,9 @@
 "use client";
 
-// Laddar 3D-ön först när sidan är klar (load + ledig tid), så att heron och
-// stillbilden aldrig väntar på three.js. Renderar bara när ön syns.
+// Laddar 3D-ön först när besökaren gör något (scrollar, rör musen, trycker
+// eller använder tangentbordet) och sidan är klar. Fram till dess visas
+// stillbilden, som är tagen ur scenen i samma läge – bytet syns inte. Så
+// väntar heron aldrig på three.js. Renderar bara när ön syns.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import dynamic from "next/dynamic";
@@ -9,22 +11,23 @@ import type { StoryPill } from "./story";
 
 const IslandScene = dynamic(() => import("./island-scene"), { ssr: false });
 
-let capable: boolean | null = null;
-
-/** Klarar enheten 3D-ön? WebGL, inte "spara data", inte en svag enhet. */
-export function can3D(): boolean {
-  if (capable !== null) return capable;
+/** Klarar enheten 3D-ön? Inte "spara data" och inte en svag enhet (billig koll). */
+export function deviceCan3D(): boolean {
   const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
-  let webgl = false;
+  const weak = (nav.hardwareConcurrency ?? 8) < 4 || (nav.deviceMemory ?? 8) < 4;
+  return !weak && !nav.connection?.saveData;
+}
+
+/** Finns WebGL? Görs först när ön ska laddas – att skapa en kontext kostar. */
+function hasWebGL(): boolean {
   try {
     const c = document.createElement("canvas");
-    webgl = Boolean(c.getContext("webgl2") ?? c.getContext("webgl"));
+    const gl = c.getContext("webgl2") ?? c.getContext("webgl");
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+    return Boolean(gl);
   } catch {
-    webgl = false;
+    return false;
   }
-  const weak = (nav.hardwareConcurrency ?? 8) < 4 || (nav.deviceMemory ?? 8) < 4;
-  capable = webgl && !weak && !nav.connection?.saveData;
-  return capable;
 }
 
 export function SceneLoader(props: {
@@ -34,7 +37,14 @@ export function SceneLoader(props: {
   selectedSlug: string | null;
   isDesktop: boolean;
   onReady: () => void;
+  /** WebGL saknas: visa stillbild och kort i stället. */
+  onUnsupported: () => void;
 }) {
+  const { onUnsupported, ...sceneProps } = props;
+  const unsupported = useRef(onUnsupported);
+  useEffect(() => {
+    unsupported.current = onUnsupported;
+  });
   const ref = useRef<HTMLDivElement>(null);
   const [go, setGo] = useState(false);
   const [visible, setVisible] = useState(true);
@@ -42,15 +52,28 @@ export function SceneLoader(props: {
   useEffect(() => {
     let cancelled = false;
     let idle = 0;
-    const ric = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 300));
+    const ric = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 200));
+    const events = ["scroll", "pointermove", "pointerdown", "touchstart", "keydown", "wheel"] as const;
     const start = () => {
-      idle = ric(() => !cancelled && setGo(true), { timeout: 3000 });
+      events.forEach((e) => window.removeEventListener(e, onInteract));
+      const go = () => {
+        idle = ric(
+          () => {
+            if (cancelled) return;
+            if (hasWebGL()) setGo(true);
+            else unsupported.current();
+          },
+          { timeout: 1000 },
+        );
+      };
+      if (document.readyState === "complete") go();
+      else window.addEventListener("load", go, { once: true });
     };
-    if (document.readyState === "complete") start();
-    else window.addEventListener("load", start, { once: true });
+    const onInteract = () => start();
+    events.forEach((e) => window.addEventListener(e, onInteract, { passive: true, once: true }));
     return () => {
       cancelled = true;
-      window.removeEventListener("load", start);
+      events.forEach((e) => window.removeEventListener(e, onInteract));
       (window.cancelIdleCallback ?? window.clearTimeout)(idle);
     };
   }, []);
@@ -63,5 +86,5 @@ export function SceneLoader(props: {
     return () => io.disconnect();
   }, []);
 
-  return <div ref={ref} className="absolute inset-0">{go && <IslandScene {...props} active={visible} />}</div>;
+  return <div ref={ref} className="absolute inset-0">{go && <IslandScene {...sceneProps} active={visible} />}</div>;
 }

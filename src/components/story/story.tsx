@@ -16,7 +16,7 @@ import { PricePill } from "../price-pill";
 import { SearchBarPreview } from "../search-bar";
 import { SelectedCard, type CardItem } from "../selected-card";
 import { POSTER, POSTER_PINS } from "./poster";
-import { can3D, SceneLoader } from "./scene-loader";
+import { deviceCan3D, SceneLoader } from "./scene-loader";
 
 export type StoryPill = { slug: string; label: string };
 
@@ -42,9 +42,10 @@ function useMedia(query: string, server: boolean): boolean {
 export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill[]; card: CardItem | null }) {
   const isDesktop = useMedia(DESKTOP, true);
   const reduced = useMedia("(prefers-reduced-motion: reduce)", false);
-  const capable = useSyncExternalStore(noSubscribe, can3D, () => true);
+  const capable = useSyncExternalStore(noSubscribe, deviceCan3D, () => true);
+  const [noWebGL, setNoWebGL] = useState(false);
   // Utan 3D (reducerad rörelse, ingen WebGL, svag enhet): stillbild och kort.
-  const mode = reduced || !capable ? "cards" : "story";
+  const mode = reduced || !capable || noWebGL ? "cards" : "story";
   const [sceneReady, setSceneReady] = useState(false);
   const [stage, setStage] = useState(0);
   const [typed, setTyped] = useState(0);
@@ -122,6 +123,7 @@ export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill
             selectedSlug={selectedSlug}
             isDesktop={isDesktop}
             onReady={() => setSceneReady(true)}
+            onUnsupported={() => setNoWebGL(true)}
           />
 
           {/* Prislapparna ovanför husen (på stillbilden – i 3D ritar scenen dem) */}
@@ -204,7 +206,7 @@ function Poster() {
       <source media={DESKTOP} srcSet={POSTER.desktop} />
       <img
         src={POSTER.mobile}
-        alt="Ön Trossö i Karlskrona med små hus och prislappar"
+        alt="Ön Trossö i Karlskrona med små hus, granar och vatten runt om"
         fetchPriority="high"
         className="absolute inset-0 h-full w-full object-cover"
       />
