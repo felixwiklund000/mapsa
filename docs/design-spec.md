@@ -55,7 +55,15 @@ tills vidare (önskemål: färgerna var för mörka).
 - Skugga, en enda: `0 4px 16px rgba(0,0,0,0.12)` – bara på flytande sökfält och bottenark
   (arket: samma skugga riktad uppåt).
 
-## Startsidan, mobil
+## Startsidan `/`
+
+- Varumärkets färger och typsnitt som `/foretag`: `sand`-bakgrund, `panel`-text, serif i rubrikerna.
+- Hero och berättelsen i en sektion. **Desktop:** texten till vänster (5/12) och ön sticky till höger (7/12, `100dvh`). **Mobil:** ön sticky överst (56 dvh) och texten under.
+- Ön (`src/components/story/island-scene.tsx`): färger från tokens, MeshStandardMaterial med roughness 0,85–0,95, kameran höjdvinkel 36° och fov 30. Avståndet räknas ur bildformatet så att hela ön ryms i bild.
+- Prislappar: `PricePill` (`src/components/price-pill.tsx`), samma markup och CSS (`.mapsa-pin`) som på kartan.
+- Stillbilder: `public/scen/poster-desktop.webp` och `poster-mobil.webp`, med prislapparnas lägen i `src/components/story/poster.ts`. Ta fram nya om ön ändras (dev-servern plus `window.__mapsaPosterMode`).
+
+## Kartan `/karta`, mobil
 
 - Ingen header. Kartan fyller hela skärmen.
 - Sökfält överst, flytande (se uppmätta värden). Ikon + "Vad letar du efter?".
@@ -69,7 +77,7 @@ tills vidare (önskemål: färgerna var för mörka).
 - Listrader: höjd 80 px, bild 64×64 med 8 px radie, titel 16 px / 600, "Massage · Trossö"
   14 px `muted`, pris till höger på en rad: "fr. 395 kr" 16 px / 600. Inga linjer, 8 px luft.
 
-## Startsidan, desktop
+## Kartan `/karta`, desktop
 
 - Panel till vänster, 380 px (logga, "För företag", meny, sök, rubrik, kategoriknappar, lista
   med samma rader som på mobil), karta till höger. Inget bottenark.

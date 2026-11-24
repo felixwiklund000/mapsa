@@ -2,7 +2,7 @@
 
 Lägg filen i repot som `docs/hemsida-brief.md`. Claude Code ska läsa den innan varje steg.
 
-> **Kartan är platt 2D – inga 3D-effekter eller kamerafärder.** Det ersätter allt som tidigare stod här om 3D, drönarflygning, pitch, kamerarotation och kamera-animationer (se avsnitt 4). 3D-staden finns bara kvar som illustration på `/foretag`.
+> **Kartan är platt 2D – inga 3D-effekter eller kamerafärder.** Det ersätter allt som tidigare stod här om 3D, drönarflygning, pitch, kamerarotation och kamera-animationer (se avsnitt 4). 3D finns bara som illustration: ön på startsidan `/` (avsnitt 4a) och staden på `/foretag`.
 
 ---
 
@@ -22,18 +22,36 @@ Lägg filen i repot som `docs/hemsida-brief.md`. Claude Code ska läsa den innan
 
 | Sida | För vem | Syfte |
 |---|---|---|
-| `/` | Kunder | Kartan. Sök, se priser, boka. |
+| `/` | Kunder | Startsidan: hero och ön i 3D med berättelsen (sök → se priser → boka), sedan "Öppna kartan". |
+| `/karta` | Kunder | Kartan. Sök, se priser, boka. |
 | `/foretag` | Företagare | Berättelsen + anmälan i ett flöde |
 | `/foretag/tack` | Företagare | Bekräftelse och vad som händer nu |
 | `/utovare/[slug]` | Kunder | Profil (finns redan) |
 | `/integritet` | Alla | Integritetspolicy (krävs eftersom vi samlar in uppgifter) |
-| `/?visning=1` | Julmarknaden | Visningsläge för skärmen i montern |
+| `/karta?visning=1` | Julmarknaden | Visningsläge för skärmen i montern |
+
+Kartan låg tidigare på `/`. Gamla länkar med `?vald=`, `?kategori=`, `?q=` eller `?visning=` på `/` skickas vidare till `/karta` (querysträngen följer med).
 
 Ta bort: nuvarande flikar (Kartan/Profilen/Statistik/Bokning), statistikraden (6 kategorier / 5 kommuner…), fyra prisnivåer, mockup-kortet i heron.
 
 ---
 
-## 4. `/` – kundsidan
+## 4a. `/` – startsidan med ön
+
+- **Hero:** rubrik *"Se vad det kostar innan du bokar."*, underrubrik *"Frisörer, massörer, PT och fler i Blekinge – på en karta, med priset."*, sökrutan (söker på `/karta`) och **Öppna kartan**. Ön syns redan här.
+- **Ön:** stiliserad low-poly-version av Trossö (@react-three/fiber + drei): rundad markplatta, 20 hus med sadeltak (krämvitt, terrakotta), granar, klippor och vatten som rör sig mjukt. Matt "lera"-känsla, mjukt ljus, en kontaktskugga, inga realtidsskuggor.
+- **Berättelsen** (sticky – ön ligger kvar medan texten scrollar förbi):
+  1. *"Sök det du letar efter."* Ön roterar långsamt, ett sökfält svävar ovanför och "frisör" skrivs in.
+  2. *"Se alla priser direkt."* 4–5 prislappar (3 på mobil) poppar upp ovanför husen, en i taget. Det är samma `PricePill` som på kartan, med riktiga utövare och priser.
+  3. *"Boka där de redan tar bokningar."* Kameran glider in mot en prislapp, som blir vald (mörk), och kortet fälls ut med "fr. X kr" och Boka. Sist kommer **Öppna kartan** → `/karta`.
+- **Mobil:** ön överst och mindre, texten under. Ingen hover, och ön går inte att vrida med fingret (scroll går rakt igenom).
+- **Prestanda:**
+  - En stillbild av ön (tagen ur scenen) visas direkt.
+  - 3D laddas (`next/dynamic`, `ssr: false`) först när besökaren scrollar eller rör musen, och ritar bara när ön syns. `dpr` är 1–1,5, och hus och träd använder instancing.
+  - Utan WebGL, på en svag enhet, med "spara data" eller vid reducerad rörelse visas stillbilden och de tre stegen som vanliga kort.
+  - Mål: Lighthouse mobil Performance ≥ 75.
+
+## 4. `/karta` – kartan
 
 Inga marknadsföringssektioner. Bara produkten. Minimalistiskt: kunden ser prislappar, trycker på en och kan boka. Från öppnad sida till bokning: högst 2 tryck (prislapp → Boka).
 
@@ -135,7 +153,7 @@ Formuläret i steg, med förhandsvisningen som uppdateras direkt:
 
 ## 8. Julmarknaden
 
-- `/?visning=1`: helskärm, inga menyer. Kartan står still, utan kameraloop. Efter 20 sekunder utan att någon rör skärmen öppnas kortet för utövarna, en i taget. Vid beröring: vanlig karta.
+- `/karta?visning=1`: helskärm, inga menyer. Kartan står still, utan kameraloop. Efter 20 sekunder utan att någon rör skärmen öppnas kortet för utövarna, en i taget. Vid beröring: vanlig karta.
 - QR-koder pekar på `/?ref=julmarknad` och `/foretag?ref=julmarknad`. `ref` sparas med anmälan.
 
 ## 9. Prestanda
