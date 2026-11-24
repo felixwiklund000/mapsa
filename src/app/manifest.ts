@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "Hitta och jämför massörer, PT:er, frisörer, kiropraktorer, naprapater och skönhet i Blekinge.",
     lang: "sv",
-    start_url: "/",
+    start_url: "/karta",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

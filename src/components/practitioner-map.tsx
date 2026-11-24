@@ -6,6 +6,7 @@ import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import { KARLSKRONA_CENTER } from "@/lib/areas";
 import { BLEKINGE_BOUNDS, mapStyle } from "@/lib/map-style";
 import { MapLoading } from "./map-loading";
+import { PRICE_PILL_CLASS } from "./price-pill";
 
 export type MapPoint = {
   slug: string;
@@ -68,13 +69,14 @@ function setOffset(marker: Marker, [x, y]: [number, number]) {
   if (o.x !== x || o.y !== y) marker.setOffset([x, y]);
 }
 
+/** Prislapp som DOM-knapp för MapLibre – samma markup som <PricePill>. */
 function pinButton(className: string, text: string, ariaLabel: string): HTMLButtonElement {
   const el = document.createElement("button");
   el.type = "button";
   el.className = className;
   el.setAttribute("aria-label", ariaLabel);
   const pin = document.createElement("span");
-  pin.className = "mapsa-pin";
+  pin.className = PRICE_PILL_CLASS;
   pin.textContent = text;
   el.append(pin);
   return el;

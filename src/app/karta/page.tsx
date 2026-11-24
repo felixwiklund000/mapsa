@@ -4,13 +4,13 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { connection } from "next/server";
 import { CategoryFilter } from "@/components/category-filter";
-import { HomeShell, type ShellItem } from "@/components/home-shell";
-import { formatPrice, lowestPrice, PractitionerRow } from "@/components/practitioner-row";
+import { HomeShell } from "@/components/home-shell";
+import { PractitionerRow } from "@/components/practitioner-row";
 import { SearchBar } from "@/components/search-bar";
 import { getCategory, type CategorySlug } from "@/lib/categories";
 import { listPublishedPractitioners, type Practitioner } from "@/lib/db/practitioners";
 import { filterPractitioners, parseFilters, type Filters } from "@/lib/search";
-import { isExternalUrl, isValidBookingUrl } from "@/lib/urls";
+import { toShellItem } from "@/lib/practitioner-item";
 
 // Kartan: karta + lista. Layouten finns i HomeShell.
 
@@ -58,7 +58,7 @@ async function HomeContent({ searchParams }: { searchParams: PageProps<"/karta">
         )
       }
       footer={<Footer />}
-      items={results.map(toItem)}
+      items={results.map(toShellItem)}
       initialSelected={vald}
     />
   );
@@ -101,25 +101,6 @@ function Footer() {
       </p>
     </div>
   );
-}
-
-function toItem(p: Practitioner): ShellItem {
-  const price = lowestPrice(p);
-  const categoryName = getCategory(p.category)?.name ?? "";
-  return {
-    slug: p.slug,
-    name: p.name,
-    label: price === null ? categoryName || p.name : formatPrice(price),
-    lat: p.lat,
-    lng: p.lng,
-    href: `/utovare/${p.slug}`,
-    image: p.images[0]?.path ?? null,
-    category: p.category,
-    categoryName,
-    area: p.area,
-    priceText: price === null ? null : `fr. ${formatPrice(price)}`,
-    booking: isValidBookingUrl(p.bookingUrl) ? { href: p.bookingUrl, external: isExternalUrl(p.bookingUrl) } : null,
-  };
 }
 
 function EmptyState({ filters, all }: { filters: Filters; all: Practitioner[] }) {

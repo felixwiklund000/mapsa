@@ -20,19 +20,22 @@ export type CardItem = {
   booking: { href: string; external: boolean } | null;
 };
 
-export function SelectedCard({ item, onClose }: { item: CardItem; onClose: () => void }) {
+/** onClose saknas = visningsexempel (startsidan): ingen stängknapp. */
+export function SelectedCard({ item, onClose }: { item: CardItem; onClose?: () => void }) {
   return (
     <article aria-label={item.name} className="relative">
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Stäng"
-        className="pressable absolute -top-1 -right-2 flex size-11 items-center justify-center rounded-full text-ink hover:bg-fill"
-      >
-        <X className="size-5" strokeWidth={2.25} aria-hidden />
-      </button>
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Stäng"
+          className="pressable absolute -top-1 -right-2 flex size-11 items-center justify-center rounded-full text-ink hover:bg-fill"
+        >
+          <X className="size-5" strokeWidth={2.25} aria-hidden />
+        </button>
+      )}
 
-      <div className="flex items-center gap-4 pr-10">
+      <div className={`flex items-center gap-4 ${onClose ? "pr-10" : ""}`}>
         <Photo src={item.image} alt={item.name} category={item.category} className="size-16 shrink-0 rounded-xl" />
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold">{item.name}</h2>

@@ -226,7 +226,8 @@ body {
   transform: scale(1.06);
 }
 .mapsa-marker.is-hover .mapsa-pin,
-.mapsa-marker.is-active .mapsa-pin {
+.mapsa-marker.is-active .mapsa-pin,
+.mapsa-pin.is-active {
   background: #141312;
   transform: scale(1.12);
 }
