@@ -296,6 +296,7 @@ export function HomeShell({
             insets={insets}
             showZoom={isDesktop}
             fitKey={measured ? items.map((i) => i.slug).join("|") : ""}
+            intro
           />
         )}
       </div>

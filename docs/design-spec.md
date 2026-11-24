@@ -58,10 +58,10 @@ tills vidare (önskemål: färgerna var för mörka).
 ## Startsidan `/`
 
 - Varumärkets färger och typsnitt som `/foretag`: `sand`-bakgrund, `panel`-text, serif i rubrikerna.
-- Hero och berättelsen i en sektion. **Desktop:** texten till vänster (5/12) och ön sticky till höger (7/12, `100dvh`). **Mobil:** ön sticky överst (56 dvh) och texten under.
-- Ön (`src/components/story/island-scene.tsx`): färger från tokens, MeshStandardMaterial med roughness 0,85–0,95, kameran höjdvinkel 36° och fov 30. Avståndet räknas ur bildformatet så att hela ön ryms i bild.
+- Hero och berättelsen i en sektion. **Desktop:** texten till vänster (5/12) och jordklotet sticky till höger (7/12, `100dvh`). **Mobil:** klotet sticky överst (56 dvh) och texten under.
+- Jordklotet (`src/components/story/globe-scene.tsx`): radie 3, low-poly (ikosaeder) med land och hav som färg per triangel, en krans av butiker längs överkanten (lat 52–64°) med framsidan mot kameran. Färger från tokens, MeshStandardMaterial med roughness 0,85–0,95, kameran höjdvinkel 10° och fov 30. Avståndet räknas ur bildformatet så att hela klotet ryms i bild. Klotet är en knapp ("Öppna kartan"): tryck → kameran dyker in (0,75 s) → `/karta`.
 - Prislappar: `PricePill` (`src/components/price-pill.tsx`), samma markup och CSS (`.mapsa-pin`) som på kartan.
-- Stillbilder: `public/scen/poster-desktop.webp` och `poster-mobil.webp`, med prislapparnas lägen i `src/components/story/poster.ts`. Ta fram nya om ön ändras (dev-servern plus `window.__mapsaPosterMode`).
+- Stillbilder: `public/scen/poster-desktop.webp` och `poster-mobil.webp`, med prislapparnas lägen i `src/components/story/poster.ts`. Ta fram nya om klotet ändras (dev-servern plus `window.__mapsaPosterMode`).
 
 ## Kartan `/karta`, mobil
 
@@ -95,7 +95,7 @@ tills vidare (önskemål: färgerna var för mörka).
   44×44 px. Vald: mörk (`#141312`) och 12 % större. Lappar som överlappar på skärmen slås ihop till
   ett kluster (vit rund lapp med orange ring och antalet). Längst in (zoom 18) läggs utövare på samma
   adress bredvid varandra. Det som skulle hamna under den valda lappen flyttas precis bredvid den.
-- Kameran rör sig bara (1) vid start: `fitBounds` utan animation, (2) när filter eller sökning
+- Kameran rör sig bara (1) vid start: utzoomad medan kartan laddar, sedan zoom in med `fitBounds` (1,6 s, en gång; reducerad rörelse → direkt), (2) när filter eller sökning
   ändras: `fitBounds` 400 ms, (3) vid tryck på ett kluster: zoom in tills det delas, 400 ms,
   (4) när vald lapp annars skulle döljas av kortet eller sökfältet: `panBy` 300 ms. Aldrig zoom
   eller flygning vid val. Padding = sökfältets och arkets uppmätta höjd. Reducerad rörelse → 0 ms.

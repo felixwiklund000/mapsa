@@ -1,9 +1,10 @@
 "use client";
 
-// Startsidans berättelse: heron och tre steg medan ön ligger kvar (sticky).
+// Startsidans berättelse: heron och tre steg medan jordklotet ligger kvar (sticky).
 //   0 hero  ·  1 "Sök det du letar efter."  ·  2 "Se alla priser direkt."
 //   3 "Boka där de redan tar bokningar." + "Öppna kartan"
-// Desktop: texten till vänster, ön till höger. Mobil: ön överst, texten under.
+// Desktop: texten till vänster, klotet till höger. Mobil: klotet överst, texten under.
+// Tryck på klotet: kameran dyker in mot det och kartan (/karta) öppnas.
 // Scroll-progress (0–3) räknas fram ur var textblocken ligger och skrivs till
 // en ref – scenen läser den varje bildruta utan att React renderar om.
 // Utan 3D (ingen WebGL, svag enhet, reducerad rörelse): stillbild och tre
@@ -11,6 +12,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { PricePill } from "../price-pill";
 import { SearchBarPreview } from "../search-bar";
@@ -51,6 +53,19 @@ export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill
   const [typed, setTyped] = useState(0);
   const progress = useRef(0);
   const blocks = useRef<(HTMLElement | null)[]>([]);
+  const router = useRouter();
+  const [entering, setEntering] = useState(false);
+
+  useEffect(() => {
+    router.prefetch("/karta");
+  }, [router]);
+
+  // Tryck på klotet: dyk in (3D) och öppna kartan, som zoomar in på butikerna.
+  function enterMap() {
+    if (entering) return;
+    setEntering(true);
+    window.setTimeout(() => router.push("/karta"), sceneReady ? 700 : 250);
+  }
 
   // Scroll → progress (0–3) och steg.
   useEffect(() => {
@@ -110,7 +125,7 @@ export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill
 
   return (
     <section aria-label="Så funkar Mapsa" className="relative lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      {/* Ön: ligger kvar medan texten scrollar förbi */}
+      {/* Jordklotet: ligger kvar medan texten scrollar förbi */}
       <div className="sticky top-0 z-10 h-[56dvh] bg-sand lg:order-2 lg:z-0 lg:h-dvh">
         <div className="relative h-full overflow-hidden">
           <div className={`absolute inset-0 transition-opacity duration-700 ${sceneReady ? "opacity-0" : ""}`}>
@@ -122,11 +137,28 @@ export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill
             pills={shown}
             selectedSlug={selectedSlug}
             isDesktop={isDesktop}
+            entering={entering}
             onReady={() => setSceneReady(true)}
             onUnsupported={() => setNoWebGL(true)}
           />
 
-          {/* Prislapparna ovanför husen (på stillbilden – i 3D ritar scenen dem) */}
+          {/* Klotet är en knapp: tryck för att öppna kartan. Ingen dragning – scroll går igenom. */}
+          <button
+            type="button"
+            onClick={enterMap}
+            aria-label="Öppna kartan"
+            className="absolute top-1/2 left-1/2 aspect-square h-[72%] max-h-[92vw] -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-panel"
+          />
+          <p
+            aria-hidden
+            className={`pointer-events-none absolute inset-x-0 bottom-[3%] text-center text-sm font-medium text-stone transition-opacity duration-300 ${
+              stage === 0 && !entering ? "" : "opacity-0"
+            }`}
+          >
+            Tryck på jordklotet för att öppna kartan
+          </p>
+
+          {/* Prislapparna ovanför butikerna (på stillbilden – i 3D ritar scenen dem) */}
           {stage >= 2 &&
             !sceneReady &&
             shown.map((pill, i) => {
@@ -143,7 +175,7 @@ export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill
               );
             })}
 
-          {/* Steg 1–2: sökfältet svävar ovanför ön */}
+          {/* Steg 1–2: sökfältet svävar ovanför klotet */}
           <div
             className={`absolute top-[7%] left-1/2 w-[min(86%,420px)] -translate-x-1/2 transition-[opacity,translate] duration-500 ease-out ${
               stage === 1 || stage === 2 ? "opacity-100" : "pointer-events-none -translate-y-3 opacity-0"
@@ -166,15 +198,24 @@ export function Story({ hero, pills, card }: { hero: ReactNode; pills: StoryPill
         </div>
       </div>
 
+      {/* På väg in i kartan: tona till kartans laddvy (samma ton) */}
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed inset-0 z-50 bg-[#f6f4ef] transition-opacity delay-300 duration-400 ${entering ? "opacity-100" : "opacity-0"}`}
+      />
+
       {/* Texten */}
       <div className="relative px-4 sm:px-8 lg:order-1 lg:pr-0 lg:pl-16">
-        <div ref={(el) => void (blocks.current[0] = el)} className="py-8 lg:flex lg:min-h-[calc(100dvh-4rem)] lg:items-center lg:py-0">
+        <div ref={(el) => void (blocks.current[0] = el)}
+          data-story-block
+          className="py-8 lg:flex lg:min-h-[calc(100dvh-4rem)] lg:items-center lg:py-0">
           <div className="w-full">{hero}</div>
         </div>
         {STEPS.map((text, i) => (
           <div
             key={text}
             ref={(el) => void (blocks.current[i + 1] = el)}
+            data-story-block
             className="flex min-h-[60dvh] items-center lg:min-h-dvh"
           >
             <div>
@@ -198,7 +239,7 @@ function OpenMap({ className = "" }: { className?: string }) {
   );
 }
 
-/** Stillbilden av ön (eller en lugn yta tills den finns). */
+/** Stillbilden av jordklotet (eller en lugn yta tills den finns). */
 function Poster() {
   if (!POSTER) return <div aria-hidden className="absolute inset-0 bg-[radial-gradient(60%_45%_at_50%_55%,#e2d9c8_0%,#ede6d9_70%)]" />;
   return (
@@ -206,7 +247,7 @@ function Poster() {
       <source media={DESKTOP} srcSet={POSTER.desktop} />
       <img
         src={POSTER.mobile}
-        alt="Ön Trossö i Karlskrona med små hus, granar och vatten runt om"
+        alt="Ett jordklot med små butiker, granar och hav"
         fetchPriority="high"
         className="absolute inset-0 h-full w-full object-cover"
       />

@@ -25,6 +25,10 @@ type MapLibreModule = typeof import("maplibre-gl");
 // Luft runt prislapparna när kartan visar alla: marginal + en halv prislapp.
 const FIT_MARGIN = 32 + 22;
 const FIT_MS = 400;
+// Intro (kartsidan): kartan öppnas över hela området och zoomar sedan in på
+// butikerna, en gång, när kartan har laddat.
+const INTRO_MS = 1600;
+const INTRO_ZOOM_OUT = 3.2;
 // Vald prislapp ska synas: så här mycket luft (px) mot sökfält, kort och kanter.
 const PIN_HALF_W = 48;
 const PIN_HALF_H = 22;
@@ -86,9 +90,10 @@ function pinButton(className: string, text: string, ariaLabel: string): HTMLButt
 // Platt 2D: ingen lutning, ingen rotation, inga 3D-hus. Prislappar som
 // överlappar på skärmen slås ihop till kluster (exakt de som överlappar –
 // MapLibres inbyggda klustring räknar per hel zoomnivå och slog ihop lappar
-// som inte överlappade). Kameran rör sig bara när *vilka*
-// ställen som visas ändras (fitKey) och när man trycker på ett kluster – aldrig
-// när man väljer ett ställe (då högst ett kort panBy om lappen annars är dold).
+// som inte överlappade). Kameran rör sig bara i introt (kartsidan öppnas:
+// zoom in på alla ställen, en gång), när *vilka* ställen som visas ändras
+// (fitKey) och när man trycker på ett kluster – aldrig när man väljer ett
+// ställe (då högst ett kort panBy om lappen annars är dold).
 export function PractitionerMap({
   points,
   selectedSlug,
@@ -98,6 +103,7 @@ export function PractitionerMap({
   insets,
   showZoom,
   fitKey,
+  intro = false,
   label = "Karta över utövare",
 }: {
   points: MapPoint[];
@@ -109,8 +115,10 @@ export function PractitionerMap({
   onMapClick?: () => void;
   insets: MapInsets;
   showZoom: boolean;
-  /** När värdet ändras visar kartan alla ställen (första gången utan animation). Tom = inte redo. */
+  /** När värdet ändras visar kartan alla ställen (första gången utan animation, eller med introt). Tom = inte redo. */
   fitKey: string;
+  /** Första visningen: börja utzoomad och zooma in på alla ställen när kartan laddat. */
+  intro?: boolean;
   /** Tillgänglig beskrivning av kartan. */
   label?: string;
 }) {
@@ -143,7 +151,7 @@ export function PractitionerMap({
 
   // Visa alla ställen, med luft så att ingen prislapp hamnar bakom sökfältet
   // eller bottenarket. Kartans egen padding rörs aldrig.
-  const fitToPoints = useCallback((animated: boolean) => {
+  const fitToPoints = useCallback((duration: number) => {
     const map = mapRef.current;
     const lib = libRef.current;
     const pts = pointsRef.current;
@@ -157,11 +165,14 @@ export function PractitionerMap({
     padding = { top: padding.top * sy, bottom: padding.bottom * sy, left: padding.left * sx, right: padding.right * sx };
     const bounds = new lib.LngLatBounds();
     for (const p of pts) bounds.extend([p.lng, p.lat]);
+    const long = duration > FIT_MS;
     map.fitBounds(bounds, {
       padding,
       maxZoom: pts.length === 1 ? 15 : 15.5,
-      duration: animated && !reducedMotion() ? FIT_MS : 0,
-      linear: true,
+      duration: reducedMotion() ? 0 : duration,
+      linear: !long,
+      // Introt: mjuk in- och utbromsning.
+      ...(long ? { easing: (t: number) => 1 - Math.pow(1 - t, 3) } : {}),
       essential: true,
     });
   }, []);
@@ -480,22 +491,43 @@ export function PractitionerMap({
     }
   }, [highlightSlug]);
 
-  // Visa alla ställen: första gången direkt, sedan kort och mjukt (~400 ms)
-  // när filter eller sökning ändrar vilka ställen som visas.
+  // Visa alla ställen: första gången direkt (eller med introt), sedan kort och
+  // mjukt (~400 ms) när filter eller sökning ändrar vilka ställen som visas.
+  const introRef = useRef(intro);
+  const [introDone, setIntroDone] = useState(!intro);
   useEffect(() => {
+    const map = mapRef.current;
     // Tom nyckel = inte redo än (t.ex. innan sökfältet och arket är uppmätta).
-    if (!ready || fitKey === "" || fittedKeyRef.current === fitKey) return;
+    if (!ready || !map || fitKey === "" || fittedKeyRef.current === fitKey) return;
     const first = fittedKeyRef.current === null;
+    if (first && introRef.current && !reducedMotion() && loadState !== "failed") {
+      // Introt: stå utzoomad över ställena medan kartan laddar, zooma in sedan.
+      if (loadState === "loading") {
+        const pts = pointsRef.current;
+        if (pts.length > 0) {
+          const lng = pts.reduce((a, p) => a + p.lng, 0) / pts.length;
+          const lat = pts.reduce((a, p) => a + p.lat, 0) / pts.length;
+          map.jumpTo({ center: [lng, lat], zoom: Math.max(8, 13 - INTRO_ZOOM_OUT) });
+        }
+        return;
+      }
+      introRef.current = false;
+      fittedKeyRef.current = fitKey;
+      map.once("moveend", () => setIntroDone(true));
+      fitToPoints(INTRO_MS);
+      return;
+    }
     fittedKeyRef.current = fitKey;
-    fitToPoints(!first);
-  }, [fitKey, ready, fitToPoints]);
+    if (first) map.once("moveend", () => setIntroDone(true));
+    fitToPoints(first ? 0 : FIT_MS);
+  }, [fitKey, ready, fitToPoints, loadState]);
 
   // Vald prislapp ska synas. Ingen zoom, ingen flygning – bara ett kort
   // panBy om lappen annars hamnar bakom sökfältet eller kortet.
   const { top: insetTop, bottom: insetBottom, left: insetLeft, right: insetRight } = insets;
   useEffect(() => {
     const map = mapRef.current;
-    if (!ready || !map || selLng === undefined || selLat === undefined) return;
+    if (!ready || !introDone || !map || selLng === undefined || selLat === undefined) return;
     const raf = requestAnimationFrame(() => {
       const pt = map.project([selLng, selLat]);
       const { clientWidth: w, clientHeight: h } = map.getContainer();
@@ -509,7 +541,7 @@ export function PractitionerMap({
       if (dx !== 0 || dy !== 0) map.panBy([dx, dy], { duration: reducedMotion() ? 0 : PAN_MS, essential: true });
     });
     return () => cancelAnimationFrame(raf);
-  }, [ready, selectedSlug, selLng, selLat, insetTop, insetBottom, insetLeft, insetRight]);
+  }, [ready, introDone, selectedSlug, selLng, selLat, insetTop, insetBottom, insetLeft, insetRight]);
 
   return (
     <div className="relative h-full w-full">

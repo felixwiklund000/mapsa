@@ -1,24 +1,24 @@
 "use client";
 
-// Laddar 3D-ön först när besökaren gör något (scrollar, rör musen, trycker
+// Laddar 3D-jordklotet först när besökaren gör något (scrollar, rör musen, trycker
 // eller använder tangentbordet) och sidan är klar. Fram till dess visas
 // stillbilden, som är tagen ur scenen i samma läge – bytet syns inte. Så
-// väntar heron aldrig på three.js. Renderar bara när ön syns.
+// väntar heron aldrig på three.js. Renderar bara när klotet syns.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import dynamic from "next/dynamic";
 import type { StoryPill } from "./story";
 
-const IslandScene = dynamic(() => import("./island-scene"), { ssr: false });
+const GlobeScene = dynamic(() => import("./globe-scene"), { ssr: false });
 
-/** Klarar enheten 3D-ön? Inte "spara data" och inte en svag enhet (billig koll). */
+/** Klarar enheten 3D-jordklotet? Inte "spara data" och inte en svag enhet (billig koll). */
 export function deviceCan3D(): boolean {
   const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
   const weak = (nav.hardwareConcurrency ?? 8) < 4 || (nav.deviceMemory ?? 8) < 4;
   return !weak && !nav.connection?.saveData;
 }
 
-/** Finns WebGL? Görs först när ön ska laddas – att skapa en kontext kostar. */
+/** Finns WebGL? Görs först när klotet ska laddas – att skapa en kontext kostar. */
 function hasWebGL(): boolean {
   try {
     const c = document.createElement("canvas");
@@ -36,6 +36,7 @@ export function SceneLoader(props: {
   pills: StoryPill[];
   selectedSlug: string | null;
   isDesktop: boolean;
+  entering: boolean;
   onReady: () => void;
   /** WebGL saknas: visa stillbild och kort i stället. */
   onUnsupported: () => void;
@@ -86,5 +87,5 @@ export function SceneLoader(props: {
     return () => io.disconnect();
   }, []);
 
-  return <div ref={ref} className="absolute inset-0">{go && <IslandScene {...sceneProps} active={visible} />}</div>;
+  return <div ref={ref} className="absolute inset-0">{go && <GlobeScene {...sceneProps} active={visible} />}</div>;
 }

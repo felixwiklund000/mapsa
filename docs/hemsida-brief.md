@@ -2,7 +2,7 @@
 
 Lägg filen i repot som `docs/hemsida-brief.md`. Claude Code ska läsa den innan varje steg.
 
-> **Kartan är platt 2D – inga 3D-effekter eller kamerafärder.** Det ersätter allt som tidigare stod här om 3D, drönarflygning, pitch, kamerarotation och kamera-animationer (se avsnitt 4). 3D finns bara som illustration: ön på startsidan `/` (avsnitt 4a) och staden på `/foretag`.
+> **Kartan är platt 2D – inga 3D-effekter eller kamerafärder.** Det ersätter allt som tidigare stod här om 3D, drönarflygning, pitch, kamerarotation och kamera-animationer (se avsnitt 4). Undantag: kartsidan zoomar in en gång när den öppnas (avsnitt 4). 3D finns bara som illustration: jordklotet på startsidan `/` (avsnitt 4a) och staden på `/foretag`.
 
 ---
 
@@ -22,7 +22,7 @@ Lägg filen i repot som `docs/hemsida-brief.md`. Claude Code ska läsa den innan
 
 | Sida | För vem | Syfte |
 |---|---|---|
-| `/` | Kunder | Startsidan: hero och ön i 3D med berättelsen (sök → se priser → boka), sedan "Öppna kartan". |
+| `/` | Kunder | Startsidan: hero och jordklotet i 3D med berättelsen (sök → se priser → boka). Tryck på klotet eller "Öppna kartan" → kartan. |
 | `/karta` | Kunder | Kartan. Sök, se priser, boka. |
 | `/foretag` | Företagare | Berättelsen + anmälan i ett flöde |
 | `/foretag/tack` | Företagare | Bekräftelse och vad som händer nu |
@@ -36,18 +36,19 @@ Ta bort: nuvarande flikar (Kartan/Profilen/Statistik/Bokning), statistikraden (6
 
 ---
 
-## 4a. `/` – startsidan med ön
+## 4a. `/` – startsidan med jordklotet
 
-- **Hero:** rubrik *"Se vad det kostar innan du bokar."*, underrubrik *"Frisörer, massörer, PT och fler i Blekinge – på en karta, med priset."*, sökrutan (söker på `/karta`) och **Öppna kartan**. Ön syns redan här.
-- **Ön:** stiliserad low-poly-version av Trossö (@react-three/fiber + drei): rundad markplatta, 20 hus med sadeltak (krämvitt, terrakotta), granar, klippor och vatten som rör sig mjukt. Matt "lera"-känsla, mjukt ljus, en kontaktskugga, inga realtidsskuggor.
-- **Berättelsen** (sticky – ön ligger kvar medan texten scrollar förbi):
-  1. *"Sök det du letar efter."* Ön roterar långsamt, ett sökfält svävar ovanför och "frisör" skrivs in.
+- **Hero:** rubrik *"Se vad det kostar innan du bokar."*, underrubrik *"Frisörer, massörer, PT och fler i Blekinge – på en karta, med priset."*, sökrutan (söker på `/karta`) och **Öppna kartan**. Jordklotet syns redan här.
+- **Jordklotet:** litet low-poly-klot (@react-three/fiber + drei) med land och hav, granar och en krans av små 3D-butiker längs överkanten. Butikerna har skyltfönster, dörr, färgad markis och skylt, och framsidan vänd mot kameran. Matt "lera"-känsla, mjukt ljus, en kontaktskugga, inga realtidsskuggor.
+- **Tryck på klotet:** kameran dyker in mot butikerna, sidan tonar till kartans laddvy och kartan (`/karta`) öppnas – där zoomar kartan in på alla butiker. Ingen dragning: klotet går inte att vrida med fingret.
+- **Berättelsen** (sticky – klotet ligger kvar medan texten scrollar förbi):
+  1. *"Sök det du letar efter."* Klotet snurrar långsamt, ett sökfält svävar ovanför och "frisör" skrivs in.
   2. *"Se alla priser direkt."* 4–5 prislappar (3 på mobil) poppar upp ovanför husen, en i taget. Det är samma `PricePill` som på kartan, med riktiga utövare och priser.
   3. *"Boka där de redan tar bokningar."* Kameran glider in mot en prislapp, som blir vald (mörk), och kortet fälls ut med "fr. X kr" och Boka. Sist kommer **Öppna kartan** → `/karta`.
-- **Mobil:** ön överst och mindre, texten under. Ingen hover, och ön går inte att vrida med fingret (scroll går rakt igenom).
+- **Mobil:** klotet överst och mindre, texten under. Ingen hover, och klotet går inte att vrida med fingret (scroll går rakt igenom).
 - **Prestanda:**
-  - En stillbild av ön (tagen ur scenen) visas direkt.
-  - 3D laddas (`next/dynamic`, `ssr: false`) först när besökaren scrollar eller rör musen, och ritar bara när ön syns. `dpr` är 1–1,5, och hus och träd använder instancing.
+  - En stillbild av klotet (tagen ur scenen) visas direkt.
+  - 3D laddas (`next/dynamic`, `ssr: false`) först när besökaren scrollar eller rör musen, och ritar bara när klotet syns. `dpr` är 1–1,5, och butiker och träd använder instancing.
   - Utan WebGL, på en svag enhet, med "spara data" eller vid reducerad rörelse visas stillbilden och de tre stegen som vanliga kort.
   - Mål: Lighthouse mobil Performance ≥ 75.
 
@@ -59,7 +60,7 @@ Inga marknadsföringssektioner. Bara produkten. Minimalistiskt: kunden ser prisl
 - **Platt 2D:** pitch 0 och bearing 0. Kartan går inte att luta eller rotera. Inga 3D-hus, ingen terräng och ingen himmel. Man kan panorera och zooma.
 - **Lugn kartstil:** dämpade färger i sidans toner, inga POI-ikoner och få etiketter (orter, stadsdelar och gatunamn när man zoomat in).
 - **Kameran rör sig bara när:**
-  1. sidan öppnas: `fitBounds` till alla utövare som visas, utan animation.
+  1. sidan öppnas: kartan står utzoomad medan den laddar och zoomar sedan in (`fitBounds`, cirka 1,6 s, en gång) på alla utövare som visas. Vid `prefers-reduced-motion`: direkt, utan animation.
   2. filter eller sökning ändras: `fitBounds`, cirka 400 ms.
   3. man trycker på ett kluster: zoom in tills klustret delas, cirka 400 ms.
   4. man väljer en utövare: ingen zoom och ingen flygning. Bara ett kort `panBy` (cirka 300 ms) om lappen annars hamnar bakom kortet eller sökrutan.
