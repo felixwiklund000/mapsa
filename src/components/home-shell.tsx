@@ -7,6 +7,7 @@ import Link from "next/link";
 import { SiteMenu } from "./site-menu";
 import { PractitionerMap, type MapPoint } from "./practitioner-map";
 import { SelectedCard, type CardItem } from "./selected-card";
+import { MapLoading } from "./map-loading";
 
 // Startsidans layout (se docs/design-spec.md).
 //
@@ -45,6 +46,7 @@ export function HomeShell({
   footer,
   items,
   initialSelected = null,
+  mapPlaceholder = false,
 }: {
   search: ReactNode;
   header: ReactNode;
@@ -53,6 +55,8 @@ export function HomeShell({
   items: ShellItem[];
   /** Utövare att visa kortet för direkt (från ?vald= i länken). */
   initialSelected?: string | null;
+  /** Visa bara laddvyn där kartan ska ligga (medan listan hämtas) – startar ingen karta. */
+  mapPlaceholder?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -280,7 +284,9 @@ export function HomeShell({
     >
       {/* Karta */}
       <div className="absolute inset-0 z-0 lg:relative lg:order-2">
-        {mapMounted && (
+        {!mapMounted || mapPlaceholder ? (
+          <MapLoading />
+        ) : (
           <PractitionerMap
             points={items}
             selectedSlug={activeSlug}

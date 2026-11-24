@@ -149,7 +149,8 @@ function EmptyState({ filters, all }: { filters: Filters; all: Practitioner[] })
   );
 }
 
-// Skelett medan listan laddar: samma layout, grå block i radernas form.
+// Skelett medan listan laddar: samma layout, ljusa block i radernas form och
+// kartans laddvy (ingen karta startas förrän listan finns).
 function HomeFallback() {
   return (
     <HomeShell
@@ -160,7 +161,7 @@ function HomeFallback() {
         <ul className="space-y-1" aria-busy="true" aria-label="Hämtar utövare">
           {Array.from({ length: 5 }, (_, i) => (
             <li key={i} className="flex h-20 items-center gap-4">
-              <div className="size-16 shrink-0 animate-pulse rounded-lg bg-fill" />
+              <div className="size-16 shrink-0 animate-pulse rounded-lg bg-[#f2efe8]" />
               <div className="flex-1 space-y-2">
                 <div className="h-4 w-1/2 animate-pulse rounded-lg bg-fill" />
                 <div className="h-3 w-1/3 animate-pulse rounded-lg bg-fill" />
@@ -173,6 +174,7 @@ function HomeFallback() {
       }
       footer={null}
       items={[]}
+      mapPlaceholder
     />
   );
 }

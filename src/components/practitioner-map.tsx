@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap, Marker } from "maplibre-gl";
 import { KARLSKRONA_CENTER } from "@/lib/areas";
 import { BLEKINGE_BOUNDS, mapStyle } from "@/lib/map-style";
+import { MapLoading } from "./map-loading";
 
 export type MapPoint = {
   slug: string;
@@ -39,6 +40,9 @@ const CLUSTER_MAX_ZOOM = 18;
 const ROW_GAP = 8;
 const ROW_STEP = 44;
 const PER_ROW = 3;
+
+// Laddvyn byts mot "Kartan kunde inte laddas" om kartan inte är klar efter så här lång tid.
+const LOAD_TIMEOUT_MS = 15000;
 
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -124,6 +128,7 @@ export function PractitionerMap({
   const pointsRef = useRef(points);
   const fittedKeyRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false); // kartan finns
+  const [loadState, setLoadState] = useState<"loading" | "done" | "failed">("loading");
 
   useEffect(() => {
     onSelectRef.current = onSelect;
@@ -283,6 +288,7 @@ export function PractitionerMap({
   useEffect(() => {
     let cancelled = false;
     let resizeObserver: ResizeObserver | undefined;
+    let loadTimer: ReturnType<typeof setTimeout> | undefined;
     const markers = markersRef.current;
     const clusters = clustersRef.current;
 
@@ -313,8 +319,17 @@ export function PractitionerMap({
         });
       } catch (err) {
         console.error("Kartan kunde inte startas (WebGL saknas?)", err);
+        setLoadState("failed");
         return;
       }
+      // Laddvyn ligger kvar tills kartan är ritad (stil och första kartrutorna).
+      map.once("load", () => {
+        clearTimeout(loadTimer);
+        if (!cancelled) setLoadState("done");
+      });
+      loadTimer = setTimeout(() => {
+        if (!cancelled && !map.loaded()) setLoadState((s) => (s === "done" ? s : "failed"));
+      }, LOAD_TIMEOUT_MS);
       map.touchZoomRotate.disableRotation();
       map.keyboard.disableRotation();
       // Tryck på kartan (inte på en prislapp – de ligger i samma behållare).
@@ -334,6 +349,7 @@ export function PractitionerMap({
 
     return () => {
       cancelled = true;
+      clearTimeout(loadTimer);
       resizeObserver?.disconnect();
       // Nedstängning får aldrig krascha sidan (MapLibre tar själv bort
       // kontroller och lappar när kartan tas bort).
@@ -493,5 +509,10 @@ export function PractitionerMap({
     return () => cancelAnimationFrame(raf);
   }, [ready, selectedSlug, selLng, selLat, insetTop, insetBottom, insetLeft, insetRight]);
 
-  return <div ref={containerRef} role="region" aria-label={label} className="h-full w-full" />;
+  return (
+    <div className="relative h-full w-full">
+      <div ref={containerRef} role="region" aria-label={label} className="h-full w-full" />
+      <MapLoading state={loadState} />
+    </div>
+  );
 }
