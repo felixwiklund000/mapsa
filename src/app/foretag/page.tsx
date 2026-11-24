@@ -69,7 +69,7 @@ export default function ForetagPage() {
         <div className="relative mx-auto flex h-16 max-w-[1440px] items-center gap-4 px-4 sm:px-8">
           <Logo />
           <nav aria-label="Sidan" className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex">
-            <Link href="/" className="rounded-full px-3 py-2 text-sm font-medium text-panel/80 hover:text-panel">
+            <Link href="/karta" className="rounded-full px-3 py-2 text-sm font-medium text-panel/80 hover:text-panel">
               Hitta utövare
             </Link>
             <a href="#sa-funkar-det" className="rounded-full px-3 py-2 text-sm font-medium text-panel/80 hover:text-panel">
@@ -208,7 +208,7 @@ export default function ForetagPage() {
             <span className={`${label} text-stone`}>UF-företag · Blekinge</span>
           </div>
           <nav aria-label="Sidfot" className="flex gap-5 text-sm text-stone">
-            <Link href="/" className="hover:text-panel">
+            <Link href="/karta" className="hover:text-panel">
               Hitta utövare
             </Link>
             <Link href="/integritet" className="hover:text-panel">

@@ -13,7 +13,7 @@ const on = "bg-ink text-canvas";
 // available: kategorier som har minst en utövare – bara de visas (plus valda).
 export function CategoryFilter({ filters, available }: { filters?: Filters; available?: CategorySlug[] }) {
   const selected = filters?.categories ?? [];
-  const allHref = filters ? filtersToHref({ ...filters, categories: [] }) : "/";
+  const allHref = filters ? filtersToHref({ ...filters, categories: [] }) : "/karta";
 
   return (
     <nav aria-label="Filter">
@@ -33,7 +33,7 @@ export function CategoryFilter({ filters, available }: { filters?: Filters; avai
           return (
             <li key={c.slug}>
               <Link
-                href={filters ? toggleCategoryHref(filters, c.slug) : `/?kategori=${c.slug}`}
+                href={filters ? toggleCategoryHref(filters, c.slug) : `/karta?kategori=${c.slug}`}
                 scroll={false}
                 aria-pressed={active}
                 className={`${chip} ${active ? on : off}`}

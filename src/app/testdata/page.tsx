@@ -23,7 +23,7 @@ export default function TestdataPage() {
             Fresha eller deras hemsida.
           </p>
         </div>
-        <Link href="/" className="btn-primary mt-8 w-full sm:inline-flex sm:w-auto">
+        <Link href="/karta" className="btn-primary mt-8 w-full sm:inline-flex sm:w-auto">
           Tillbaka till alla utövare
         </Link>
       </div>

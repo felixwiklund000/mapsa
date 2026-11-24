@@ -312,12 +312,12 @@ export function HomeShell({
               <Link href="/foretag" className="rounded-full px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-ink">
                 För företag
               </Link>
-              <SiteMenu current="/" />
+              <SiteMenu current="/karta" />
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">{search}</div>
-            <SiteMenu variant="round" current="/" className="lg:hidden" />
+            <SiteMenu variant="round" current="/karta" className="lg:hidden" />
           </div>
         </div>
 

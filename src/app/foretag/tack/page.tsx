@@ -25,7 +25,7 @@ export default function TackPage() {
         <p className="mt-4 text-xl leading-relaxed text-stone">Vi hör av oss inom 48 timmar.</p>
         <p className="mt-10 text-base text-stone">Under tiden:</p>
         <Link
-          href="/"
+          href="/karta"
           className="pressable mt-3 inline-flex h-14 items-center rounded-full bg-panel px-7 text-lg font-medium text-white"
         >
           Se kartan

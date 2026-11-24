@@ -176,7 +176,7 @@ const CONTAINER = "page-container max-w-[752px] pt-[max(12px,env(safe-area-inset
 
 function BackLink() {
   return (
-    <Link href="/" aria-label="Alla utövare" className="pressable -ml-1.5 flex size-11 items-center justify-center">
+    <Link href="/karta" aria-label="Alla utövare" className="pressable -ml-1.5 flex size-11 items-center justify-center">
       <span className="flex size-10 items-center justify-center rounded-full bg-fill text-ink">
         <ArrowLeft className="size-5" strokeWidth={2} aria-hidden />
       </span>

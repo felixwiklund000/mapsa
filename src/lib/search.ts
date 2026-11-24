@@ -67,7 +67,7 @@ export function filtersToHref(filters: Filters): string {
   if (filters.q) params.set("q", filters.q);
   for (const c of filters.categories) params.append("kategori", c);
   const qs = params.toString();
-  return qs ? `/?${qs}` : "/";
+  return qs ? `/karta?${qs}` : "/karta";
 }
 
 /** Länk som slår på/av en kategori men behåller övriga filter. */

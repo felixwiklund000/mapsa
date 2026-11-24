@@ -9,7 +9,7 @@ import type { Filters } from "@/lib/search";
 export function SearchBar({ filters }: { filters?: Filters }) {
   return (
     <form
-      action="/"
+      action="/karta"
       method="get"
       role="search"
       className="flex h-15 items-center gap-4 rounded-full border border-line bg-canvas px-5 shadow-float lg:shadow-none"

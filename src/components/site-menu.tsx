@@ -16,29 +16,29 @@ type Item = { href: string; label: string; hint?: string; icon: LucideIcon; matc
 
 // Privatpersoner först – det är de som använder Mapsa mest.
 const MAIN: Item[] = [
-  { href: "/", label: "Kartan", hint: "Hitta och jämför utövare", icon: Map, match: "/" },
+  { href: "/karta", label: "Kartan", hint: "Hitta och jämför utövare", icon: Map, match: "/karta" },
   { href: "/foretag", label: "För företag", hint: "Lägg upp ditt företag", icon: Store, match: "/foretag" },
 ];
 const QUICK = [
-  { href: "/?kategori=frisor", label: "Frisör" },
-  { href: "/?kategori=massage", label: "Massage" },
-  { href: "/?kategori=pt", label: "PT" },
-  { href: "/?kategori=naprapat", label: "Naprapat" },
-  { href: "/?kategori=skonhet", label: "Skönhet" },
+  { href: "/karta?kategori=frisor", label: "Frisör" },
+  { href: "/karta?kategori=massage", label: "Massage" },
+  { href: "/karta?kategori=pt", label: "PT" },
+  { href: "/karta?kategori=naprapat", label: "Naprapat" },
+  { href: "/karta?kategori=skonhet", label: "Skönhet" },
 ];
 const BUSINESS: Item[] = [
   { href: "/foretag#anmal", label: "Lägg upp ditt företag", hint: "Gratis att komma igång", icon: Store },
   { href: "/foretag#fragor", label: "Vanliga frågor", icon: CircleHelp },
 ];
 
-// current: vilken sida man är på ("/" eller "/foretag") – markeras i menyn.
+// current: vilken sida man är på ("/", "/karta" eller "/foretag") – markeras i menyn.
 export function SiteMenu({
   variant = "pill",
   current,
   className = "",
 }: {
   variant?: "pill" | "round";
-  current?: "/" | "/foretag";
+  current?: "/" | "/karta" | "/foretag";
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
