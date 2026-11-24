@@ -233,12 +233,27 @@ body {
 .mapsa-marker.is-active {
   z-index: 5 !important;
 }
-/* Krockar lappen med en annan visas en liten tom lapp (som Airbnb). */
-.mapsa-pin.is-dot {
-  width: 20px;
-  height: 12px;
-  padding: 0;
-  font-size: 0;
+/* Kluster: prislappar som skulle överlappa slås ihop till en rund lapp med
+   antalet. Vit med orange ring, så att den skiljer sig från prislapparna.
+   Tryck zoomar in tills klustret delas upp. */
+.mapsa-marker.is-cluster {
+  z-index: 1;
+}
+.mapsa-marker.is-cluster .mapsa-pin {
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  background: #ffffff;
+  color: #141312;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow:
+    0 0 0 2px #ff5a1f,
+    0 1px 4px rgb(0 0 0 / 0.18);
+}
+.mapsa-marker.is-cluster:hover .mapsa-pin {
+  background: #fff4ef;
 }
 @keyframes mapsa-pop {
   from {
